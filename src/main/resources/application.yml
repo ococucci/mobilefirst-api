@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: mobilefirst-api
+
+server:
+  port: 8080
+
+orderfirst:
+  # stub : API du SI bouchonnées (données de démonstration identiques au front).
+  integrations: stub
+  cors:
+    allowed-origins:
+      - http://localhost:4200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

@@ -1,0 +1,97 @@
+package com.orderfirst.api.domain;
+
+import java.util.List;
+
+/** Modèle métier de la prise de commande mobile, aligné sur le front (domain/models.ts). */
+public final class Model {
+    private Model() {
+    }
+
+    public enum Score { vert, orange, rouge }
+
+    public enum Flow { acquisition, forfait, options, sim }
+
+    public enum FamilyId {
+        bloque("bloque"), nonBloque("non-bloque"), internet("internet"), prepaye("prepaye");
+
+        private final String code;
+
+        FamilyId(final String code) {
+            this.code = code;
+        }
+
+        @com.fasterxml.jackson.annotation.JsonValue
+        public String code() {
+            return code;
+        }
+
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public static FamilyId of(final String code) {
+            for (final var f : values()) {
+                if (f.code.equals(code)) {
+                    return f;
+                }
+            }
+            throw new IllegalArgumentException("Famille inconnue : " + code);
+        }
+    }
+
+    public enum SimType { physique, esim }
+
+    public enum PieceType { CNI, PASSEPORT }
+
+    public enum CustomerType { GP, PRO }
+
+    public record Identity(
+            String civilite, String nom, String prenom, String dateNaissance, String departementNaissance,
+            String nationalite, PieceType pieceType, String pieceNumero, String mobileContact, String email) {
+    }
+
+    public record Address(String ligne, String codePostal, String commune, String complement) {
+    }
+
+    public record Company(String raisonSociale, String siren, String siret) {
+    }
+
+    /** {@code monthlyPrice} est null pour une ligne Card prépayée (sans mensualité). */
+    public record Line(String msisdn, String offerId, String offerLabel, Double monthlyPrice, boolean isCard,
+                       SimType simType, List<String> options) {
+    }
+
+    public record Customer(String id, CustomerType type, Identity identity, Company company, Address address,
+                           Score score, List<Line> lines) {
+        public Customer withData(final Identity identity, final Address address, final Score score) {
+            return new Customer(id, type, identity, company, address, score, lines);
+        }
+    }
+
+    /** {@code entryLevel} : offre d'entrée de gamme (remise Open ML de 5 € au lieu de 10 €). */
+    public record Offer(String id, FamilyId family, String label, String detail, double price, boolean entryLevel) {
+    }
+
+    public record MobileOption(String id, String label, double price) {
+    }
+
+    public record Promo(String offerId, String label, double amount, int months) {
+    }
+
+    public record Terminal(String id, String label, double price) {
+    }
+
+    public record SimReason(String id, String label, boolean fee) {
+    }
+
+    public static final List<SimReason> SIM_REASONS = List.of(
+            new SimReason("mobile", "Changement de mobile", false),
+            new SimReason("technique", "Problème technique", false),
+            new SimReason("obsolete", "SIM obsolète", false),
+            new SimReason("perte-vol", "SIM perdue ou volée", true),
+            new SimReason("endommagee", "SIM endommagée", false),
+            new SimReason("esim", "Passage à l'eSIM", false),
+            new SimReason("autre", "Autre", false));
+
+    public static final List<String> DONOR_OPERATORS = List.of("SFR Caraibes", "FREE", "Dauphin Telecom", "UTS", "DIGICEL");
+
+    public static final double CARD_SIM_PRICE = 10;
+    public static final double SIM_LOSS_FEE = 10;
+}
