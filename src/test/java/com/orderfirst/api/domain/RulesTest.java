@@ -3,7 +3,9 @@ package com.orderfirst.api.domain;
 import com.orderfirst.api.domain.Model.FamilyId;
 import com.orderfirst.api.domain.Model.Identity;
 import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.MobileOption;
+import com.orderfirst.api.domain.Model.OfferOption;
+import com.orderfirst.api.domain.Model.OpenMl;
+import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.Offer;
 import com.orderfirst.api.domain.Model.PieceType;
 import com.orderfirst.api.domain.Model.Score;
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RulesTest {
@@ -22,7 +25,9 @@ class RulesTest {
             PieceType.CNI, "12AB34567", "0690123456", "a@b.fr");
 
     private static Offer offer(final FamilyId family, final double price, final boolean entryLevel) {
-        return new Offer("o", family, "Offre", "", price, entryLevel);
+        return new Offer("o", family, "Offre", "", price,
+                family == FamilyId.prepaye ? OpenMl.NONE : OpenMl.of(entryLevel ? 5 : 10),
+                List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), List.of());
     }
 
     private static Line line(final boolean card) {
@@ -54,8 +59,21 @@ class RulesTest {
 
     @Test
     void monthlyPrice() {
-        assertEquals(17.99, Rules.monthly(offer(FamilyId.bloque, 22.99, false), List.of(new MobileOption("a", "A", 5)), true));
+        final var offer = offer(FamilyId.bloque, 22.99, false);
+        assertEquals(17.99, Rules.monthly(offer, List.of("a"), true));
         assertEquals(0, Rules.monthly(offer(FamilyId.bloque, 5, true), List.of(), true));
+        // L'option incluse est toujours active et gratuite ; une option non proposée est ignorée.
+        assertEquals(List.of("a", "inc"), Rules.selectedOptions(offer, List.of("a", "x")).stream().map(OfferOption::id).toList());
+        assertEquals(22.99, Rules.monthly(offer, List.of("inc"), false));
+    }
+
+    @Test
+    void promosApplyAutomatically() {
+        final var offer = offer(FamilyId.bloque, 22.99, false);
+        assertNull(Rules.monthlyDuringPromo(offer, 17.99));
+        final var promoted = offer.withPromos(List.of(new Promo("p", "−10 € / 6 mois", 10, 6)));
+        assertEquals(7.99, Rules.monthlyDuringPromo(promoted, 17.99));
+        assertEquals(0, Rules.monthlyDuringPromo(promoted, 4));
     }
 
     @Test

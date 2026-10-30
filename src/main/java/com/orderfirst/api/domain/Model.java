@@ -65,14 +65,36 @@ public final class Model {
         }
     }
 
-    /** {@code entryLevel} : offre d'entrée de gamme (remise Open ML de 5 € au lieu de 10 €). */
-    public record Offer(String id, FamilyId family, String label, String detail, double price, boolean entryLevel) {
+    /**
+     * Offre du catalogue avec ce qui en dépend : éligibilité Open ML, options proposées (prix propres à l'offre,
+     * éventuellement incluses) et remises appliquées automatiquement.
+     */
+    public record Offer(String id, FamilyId family, String label, String detail, double price, OpenMl openMl,
+                        List<OfferOption> options, List<Promo> promos) {
+        public java.util.Optional<OfferOption> option(final String optionId) {
+            return options.stream().filter(o -> o.id().equals(optionId)).findFirst();
+        }
+
+        public Offer withPromos(final List<Promo> promos) {
+            return new Offer(id, family, label, detail, price, openMl, options, promos);
+        }
     }
 
-    public record MobileOption(String id, String label, double price) {
+    /** Remise Open ML : −5 € par mois pour une offre d'entrée de gamme, −10 € sinon ; null si non éligible. */
+    public record OpenMl(boolean eligible, Double monthlyDiscount) {
+        public static final OpenMl NONE = new OpenMl(false, null);
+
+        public static OpenMl of(final double monthlyDiscount) {
+            return new OpenMl(true, monthlyDiscount);
+        }
     }
 
-    public record Promo(String offerId, String label, double amount, int months) {
+    /** Option proposée avec une offre ; une option incluse est gratuite et toujours active. */
+    public record OfferOption(String id, String label, double price, boolean included) {
+    }
+
+    /** Remise commerciale appliquée automatiquement à l'offre (api-promo advice). */
+    public record Promo(String id, String label, double monthlyDiscount, int durationMonths) {
     }
 
     public record Terminal(String id, String label, double price) {

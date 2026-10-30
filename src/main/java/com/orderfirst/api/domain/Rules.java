@@ -3,8 +3,9 @@ package com.orderfirst.api.domain;
 import com.orderfirst.api.domain.Model.FamilyId;
 import com.orderfirst.api.domain.Model.Identity;
 import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.MobileOption;
+import com.orderfirst.api.domain.Model.OfferOption;
 import com.orderfirst.api.domain.Model.Offer;
+import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.Score;
 
 import java.math.BigInteger;
@@ -110,19 +111,36 @@ public final class Rules {
                 || !Objects.equals(before.dateNaissance(), after.dateNaissance());
     }
 
-    /** Open ML : indisponible pour la Carte Prépayée et pour une ligne Card. */
+    /** Open ML : selon l'éligibilité de l'offre (pas la Carte Prépayée) et jamais pour une ligne Card. */
     public static boolean isOpenMlAvailable(final Offer offer, final Line line) {
-        return offer != null && offer.family() != FamilyId.prepaye && (line == null || !line.isCard());
+        return offer != null && offer.openMl().eligible() && (line == null || !line.isCard());
     }
 
-    /** Open ML : −5 €/mois à vie pour une offre d'entrée de gamme, −10 €/mois sinon. */
+    /** Montant mensuel de la remise Open ML de l'offre (5 € pour une offre d'entrée de gamme, 10 € sinon). */
     public static double openMlDiscount(final Offer offer) {
-        return offer.entryLevel() ? 5 : 10;
+        return offer.openMl().monthlyDiscount() == null ? 0 : offer.openMl().monthlyDiscount();
     }
 
-    public static double monthly(final Offer offer, final List<MobileOption> options, final boolean openMl) {
-        final double opts = options.stream().mapToDouble(MobileOption::price).sum();
+    /** Options actives avec l'offre : les options incluses, plus celles choisies parmi celles proposées. */
+    public static List<OfferOption> selectedOptions(final Offer offer, final List<String> optionIds) {
+        return offer.options().stream().filter(o -> o.included() || optionIds.contains(o.id())).toList();
+    }
+
+    /** Mensualité hors remises temporaires : prix de l'offre, options payantes, remise Open ML. */
+    public static double monthly(final Offer offer, final List<String> optionIds, final boolean openMl) {
+        final double opts = selectedOptions(offer, optionIds).stream().filter(o -> !o.included()).mapToDouble(OfferOption::price).sum();
         return Math.max(0, round(offer.price() + opts - (openMl ? openMlDiscount(offer) : 0)));
+    }
+
+    /**
+     * Mensualité pendant les remises (appliquées automatiquement) : toutes les remises de l'offre cumulées,
+     * sur la durée de la plus courte. Null si l'offre n'a pas de remise.
+     */
+    public static Double monthlyDuringPromo(final Offer offer, final double monthly) {
+        if (offer.promos().isEmpty()) {
+            return null;
+        }
+        return Math.max(0, round(monthly - offer.promos().stream().mapToDouble(Promo::monthlyDiscount).sum()));
     }
 
     public static double simChangeFee(final String reasonId) {

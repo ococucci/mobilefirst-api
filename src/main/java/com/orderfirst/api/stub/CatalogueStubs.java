@@ -1,6 +1,5 @@
 package com.orderfirst.api.stub;
 
-import com.orderfirst.api.domain.Model.MobileOption;
 import com.orderfirst.api.domain.Model.Offer;
 import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Rules;
@@ -24,18 +23,13 @@ final class CatalogueStubs {
         public List<Offer> offers() {
             return StubData.OFFERS;
         }
-
-        @Override
-        public List<MobileOption> options() {
-            return StubData.OPTIONS;
-        }
     }
 
     @Stub
     static class PromoAdvice implements PromoAdvicePort {
         @Override
-        public List<Promo> promos() {
-            return StubData.PROMOS;
+        public List<Promo> promosFor(final String offerId) {
+            return StubData.PROMOS.getOrDefault(offerId, List.of());
         }
     }
 

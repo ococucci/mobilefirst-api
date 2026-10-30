@@ -7,8 +7,9 @@ import com.orderfirst.api.domain.Model.CustomerType;
 import com.orderfirst.api.domain.Model.FamilyId;
 import com.orderfirst.api.domain.Model.Identity;
 import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.MobileOption;
 import com.orderfirst.api.domain.Model.Offer;
+import com.orderfirst.api.domain.Model.OfferOption;
+import com.orderfirst.api.domain.Model.OpenMl;
 import com.orderfirst.api.domain.Model.PieceType;
 import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.Score;
@@ -68,28 +69,52 @@ final class StubData {
     /** Résultat du re-scoring Préventel pour les clients en base (ligne Card qui change de forfait). */
     static final Map<String, Score> RESCORE = Map.of("CL-000101", Score.vert, "CL-000102", Score.orange);
 
+    private static OfferOption option(final String id, final double price) {
+        final var label = switch (id) {
+            case "europe" -> "Option Europe 10 Go";
+            case "multisim" -> "Multi-SIM";
+            case "securite" -> "Sécurité mobile";
+            case "international" -> "Appels internationaux";
+            default -> id;
+        };
+        return new OfferOption(id, label, price, false);
+    }
+
+    private static OfferOption included(final String id) {
+        final var o = option(id, 0);
+        return new OfferOption(o.id(), o.label(), 0, true);
+    }
+
+    private static Offer offer(final String id, final FamilyId family, final String label, final String detail,
+                               final double price, final OpenMl openMl, final OfferOption... options) {
+        return new Offer(id, family, label, detail, price, openMl, List.of(options), List.of());
+    }
+
+    /** Offres Castor et options proposées avec chacune (prix propres à l'offre, options incluses). */
     static final List<Offer> OFFERS = List.of(
-            new Offer("bl-20", FamilyId.bloque, "Forfait bloqué 20 Go", "Appels 2 h, SMS illimités", 15.99, true),
-            new Offer("bl-60", FamilyId.bloque, "Forfait bloqué 60 Go", "Appels et SMS illimités", 22.99, false),
-            new Offer("bl-120", FamilyId.bloque, "Forfait bloqué 120 Go", "Appels et SMS illimités, 5G", 29.99, false),
-            new Offer("nb-10", FamilyId.nonBloque, "Forfait 10 Go", "Appels et SMS illimités", 9.99, true),
-            new Offer("nb-100", FamilyId.nonBloque, "Forfait 100 Go", "Appels et SMS illimités, 5G", 24.99, false),
-            new Offer("nb-200", FamilyId.nonBloque, "Forfait 200 Go 5G", "Appels illimités, 35 Go en Europe", 34.99, false),
-            new Offer("ie-4g", FamilyId.internet, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, true),
-            new Offer("home-5g", FamilyId.internet, "4G/5G Home", "Internet illimité à domicile", 34.99, false),
-            new Offer("pp-classique", FamilyId.prepaye, "Carte Prépayée", "Sans engagement, rechargeable", 0, true));
+            offer("bl-20", FamilyId.bloque, "Forfait bloqué 20 Go", "Appels 2 h, SMS illimités", 15.99, OpenMl.of(5),
+                    option("europe", 5), option("multisim", 3), option("securite", 2)),
+            offer("bl-60", FamilyId.bloque, "Forfait bloqué 60 Go", "Appels et SMS illimités", 22.99, OpenMl.of(10),
+                    option("europe", 5), option("multisim", 3), option("securite", 2)),
+            offer("bl-120", FamilyId.bloque, "Forfait bloqué 120 Go", "Appels et SMS illimités, 5G", 29.99, OpenMl.of(10),
+                    included("europe"), option("multisim", 3), option("international", 10)),
+            offer("nb-10", FamilyId.nonBloque, "Forfait 10 Go", "Appels et SMS illimités", 9.99, OpenMl.of(5),
+                    option("europe", 5), option("securite", 2)),
+            offer("nb-100", FamilyId.nonBloque, "Forfait 100 Go", "Appels et SMS illimités, 5G", 24.99, OpenMl.of(10),
+                    option("europe", 5), option("multisim", 3), option("securite", 2), option("international", 10)),
+            offer("nb-200", FamilyId.nonBloque, "Forfait 200 Go 5G", "Appels illimités, 35 Go en Europe", 34.99, OpenMl.of(10),
+                    included("europe"), option("multisim", 3), option("securite", 2), option("international", 8)),
+            offer("ie-4g", FamilyId.internet, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, OpenMl.of(5),
+                    option("securite", 2)),
+            offer("home-5g", FamilyId.internet, "4G/5G Home", "Internet illimité à domicile", 34.99, OpenMl.of(10)),
+            offer("pp-classique", FamilyId.prepaye, "Carte Prépayée", "Sans engagement, rechargeable", 0, OpenMl.NONE));
 
-    static final List<MobileOption> OPTIONS = List.of(
-            new MobileOption("europe", "Option Europe 10 Go", 5),
-            new MobileOption("multisim", "Multi-SIM", 3),
-            new MobileOption("securite", "Sécurité mobile", 2),
-            new MobileOption("international", "Appels internationaux", 10));
-
-    static final List<Promo> PROMOS = List.of(
-            new Promo("bl-60", "−10 € / 6 mois", 10, 6),
-            new Promo("bl-120", "−10 € / 6 mois", 10, 6),
-            new Promo("nb-100", "−10 € / 6 mois", 10, 6),
-            new Promo("home-5g", "−5 € / 12 mois", 5, 12));
+    /** Remises api-promo advice, par offre. */
+    static final Map<String, List<Promo>> PROMOS = Map.of(
+            "bl-60", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
+            "bl-120", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
+            "nb-100", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
+            "home-5g", List.of(new Promo("promo-5e-12m", "−5 € / 12 mois", 5, 12)));
 
     /** N° sponsor Open ML reconnus par api RHOC. */
     static final List<String> SPONSORS = List.of("0690654321", "0696112233");

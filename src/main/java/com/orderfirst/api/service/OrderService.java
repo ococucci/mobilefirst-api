@@ -7,12 +7,12 @@ import com.orderfirst.api.domain.Model.CustomerType;
 import com.orderfirst.api.domain.Model.FamilyId;
 import com.orderfirst.api.domain.Model.Flow;
 import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.MobileOption;
+import com.orderfirst.api.domain.Model.OfferOption;
+import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.Offer;
 import com.orderfirst.api.domain.Model.Score;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.domain.Validation;
-import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.DocumentPort;
 import com.orderfirst.api.port.ImlPort;
 import com.orderfirst.api.port.ManagePaymentPort;
@@ -45,7 +45,7 @@ import static com.orderfirst.api.domain.Rules.isBlank;
 @Service
 public class OrderService {
     private final CustomerService customers;
-    private final CataloguePort catalogue;
+    private final CatalogService catalog;
     private final RhocPort rhoc;
     private final RessourcePort ressource;
     private final ScoringPort scoring;
@@ -59,12 +59,12 @@ public class OrderService {
     /** Montant dû en caisse par commande, pour contrôler l'encaissement. */
     private final Map<String, Double> cashDueByOrder = new ConcurrentHashMap<>();
 
-    public OrderService(final CustomerService customers, final CataloguePort catalogue, final RhocPort rhoc,
+    public OrderService(final CustomerService customers, final CatalogService catalog, final RhocPort rhoc,
                         final RessourcePort ressource, final ScoringPort scoring, final SiFinancierPort siFinancier,
                         final ImlPort iml, final DocumentPort documents, final OrderPort orders,
                         final OrderEventPublisher bus, final ManagePaymentPort payments, final Clock clock) {
         this.customers = customers;
-        this.catalogue = catalogue;
+        this.catalog = catalog;
         this.rhoc = rhoc;
         this.ressource = ressource;
         this.scoring = scoring;
@@ -80,14 +80,32 @@ public class OrderService {
     public record CreatedOrder(String orderNumber, Instant createdAt, double cashDue) {
     }
 
-    /** Message publié dans le bus PubSub à la validation de la commande. */
+    /**
+     * Message publié dans le bus PubSub à la validation de la commande. L'offre vendue (acquisition, changement de
+     * forfait) ou les options modifiées y sont recopiées avec libellés et prix du jour de la vente.
+     */
     public record OrderValidated(String topic, String orderNumber, Instant createdAt, Flow flow, String customerId,
-                                 String msisdn, double cashDue, OrderRequest order) {
+                                 String msisdn, double cashDue, OfferSnapshot offer, OptionsChange optionsChange,
+                                 OrderRequest order) {
+    }
+
+    /** Offre vendue : options actives (incluses comprises), remises appliquées, Open ML et mensualités calculées. */
+    public record OfferSnapshot(String id, String label, double price, List<OfferOption> options, List<Promo> promos,
+                                OpenMlApplied openMl, double monthlyPrice, Double monthlyPriceDuringPromo) {
+    }
+
+    public record OpenMlApplied(String sponsor, double monthlyDiscount) {
+    }
+
+    /** Modification d'options : options ajoutées et retirées, et variation de la mensualité. */
+    public record OptionsChange(List<OfferOption> added, List<OfferOption> removed, double monthlyDelta) {
     }
 
     public CreatedOrder create(final OrderRequest request) {
         final var checked = validate(request);
-        final var created = orders.create(checked.msisdn(), payload(request, checked));
+        final var offer = request.flow() == Flow.acquisition || request.flow() == Flow.forfait ? snapshot(request, checked) : null;
+        final var optionsChange = request.flow() == Flow.options ? optionsChange(request, checked) : null;
+        final var created = orders.create(checked.msisdn(), payload(request, checked, offer, optionsChange));
         if (request.flow() == Flow.acquisition && request.number().mode() == NumberChoice.Mode.nouveau) {
             ressource.reserve(request.number().msisdn());
         }
@@ -96,7 +114,7 @@ public class OrderService {
         }
         cashDueByOrder.put(created.orderNumber(), checked.cashDue());
         bus.publish(new OrderValidated(OrderEventPublisher.TOPIC, created.orderNumber(), created.createdAt(), request.flow(),
-                request.customerId(), checked.msisdn(), checked.cashDue(), request));
+                request.customerId(), checked.msisdn(), checked.cashDue(), offer, optionsChange, request));
         return new CreatedOrder(created.orderNumber(), created.createdAt(), checked.cashDue());
     }
 
@@ -199,12 +217,20 @@ public class OrderService {
 
     private Checked options(final OrderRequest r, final Customer customer, final Validation v) {
         final var line = modifiableLine(r, customer, v);
-        checkOptions(r, null, v);
-        if (line != null && !v.has("options")) {
-            v.check(Objects.equals(Set.copyOf(line.options()), Set.copyOf(r.optionsOrEmpty())), "options",
+        // Les options proposées sont celles de l'offre actuelle de la ligne.
+        final var offer = line == null ? null : catalog.offer(line.offerId()).orElse(null);
+        checkOptions(r, offer, v);
+        if (offer != null && !v.has("options")) {
+            v.check(Objects.equals(paidOptions(offer, line.options()), paidOptions(offer, r.optionsOrEmpty())), "options",
                     "Ajoutez ou retirez au moins une option.");
         }
-        return new Checked(line == null ? "" : line.msisdn(), 0, customer, null, line);
+        return new Checked(line == null ? "" : line.msisdn(), 0, customer, offer, line);
+    }
+
+    /** Options payantes choisies : une option incluse ne compte pas comme un ajout ou un retrait. */
+    private static Set<String> paidOptions(final Offer offer, final List<String> ids) {
+        return Rules.selectedOptions(offer, ids).stream().filter(o -> !o.included()).map(OfferOption::id)
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private Checked sim(final OrderRequest r, final Customer customer, final Validation v) {
@@ -262,7 +288,7 @@ public class OrderService {
     }
 
     private Offer offer(final String offerId, final Score score, final Validation v) {
-        final var offer = catalogue.offers().stream().filter(o -> o.id().equals(offerId)).findFirst().orElse(null);
+        final var offer = offerId == null ? null : catalog.offer(offerId).orElse(null);
         if (offer == null) {
             v.check(true, "offerId", "Choisissez un forfait.");
             return null;
@@ -273,10 +299,12 @@ public class OrderService {
     }
 
     private void checkOptions(final OrderRequest r, final Offer offer, final Validation v) {
-        final var known = catalogue.options().stream().map(MobileOption::id).toList();
-        v.check(r.optionsOrEmpty().stream().anyMatch(o -> o == null || !known.contains(o)), "options", "Option inconnue du catalogue.");
-        v.check(offer != null && offer.family() == FamilyId.prepaye && !r.optionsOrEmpty().isEmpty(), "options",
-                "Pas d'option mobile sur la Carte Prépayée.");
+        if (offer == null) {
+            return;
+        }
+        v.check(offer.options().isEmpty() && !r.optionsOrEmpty().isEmpty(), "options", "Aucune option n'est proposée avec cette offre.");
+        v.check(r.optionsOrEmpty().stream().anyMatch(o -> o == null || offer.option(o).isEmpty()), "options",
+                "Option non proposée avec cette offre.");
     }
 
     private void openMl(final OrderRequest r, final Offer offer, final Line line, final Validation v) {
@@ -313,15 +341,35 @@ public class OrderService {
         v.check(!Boolean.TRUE.equals(r.privacyAccepted()), "privacyAccepted", "La politique de données personnelles doit être acceptée.");
     }
 
-    private Map<String, Object> payload(final OrderRequest r, final Checked c) {
+    private OfferSnapshot snapshot(final OrderRequest r, final Checked c) {
+        final var offer = c.offer();
+        final boolean openMl = !isBlank(r.openMlSponsor()) && Rules.isOpenMlAvailable(offer, c.line());
+        final double monthly = Rules.monthly(offer, r.optionsOrEmpty(), openMl);
+        return new OfferSnapshot(offer.id(), offer.label(), offer.price(), Rules.selectedOptions(offer, r.optionsOrEmpty()),
+                offer.promos(), openMl ? new OpenMlApplied(Rules.digits(r.openMlSponsor()), Rules.openMlDiscount(offer)) : null,
+                monthly, Rules.monthlyDuringPromo(offer, monthly));
+    }
+
+    private OptionsChange optionsChange(final OrderRequest r, final Checked c) {
+        final var current = paidOptions(c.offer(), c.line().options());
+        final var wanted = paidOptions(c.offer(), r.optionsOrEmpty());
+        final var added = c.offer().options().stream().filter(o -> wanted.contains(o.id()) && !current.contains(o.id())).toList();
+        final var removed = c.offer().options().stream().filter(o -> current.contains(o.id()) && !wanted.contains(o.id())).toList();
+        final double delta = added.stream().mapToDouble(OfferOption::price).sum() - removed.stream().mapToDouble(OfferOption::price).sum();
+        return new OptionsChange(added, removed, Rules.round(delta));
+    }
+
+    private Map<String, Object> payload(final OrderRequest r, final Checked c, final OfferSnapshot offer, final OptionsChange optionsChange) {
         final var payload = new LinkedHashMap<String, Object>();
         payload.put("flow", r.flow());
         payload.put("customerId", r.customerId());
         payload.put("msisdn", c.msisdn());
         payload.put("cashDue", c.cashDue());
-        if (c.line() != null && r.flow() == Flow.options) {
-            payload.put("addedOptions", r.optionsOrEmpty().stream().filter(o -> !c.line().options().contains(o)).toList());
-            payload.put("removedOptions", c.line().options().stream().filter(o -> !r.optionsOrEmpty().contains(o)).toList());
+        if (offer != null) {
+            payload.put("offer", offer);
+        }
+        if (optionsChange != null) {
+            payload.put("optionsChange", optionsChange);
         }
         payload.put("request", r);
         return payload;

@@ -1,8 +1,15 @@
 package com.orderfirst.api.web;
 
+import com.orderfirst.api.domain.Model;
+import com.orderfirst.api.port.OrderEventPublisher;
+import com.orderfirst.api.service.OrderService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
@@ -11,8 +18,13 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
@@ -37,8 +49,29 @@ class OrderFirstApiTest {
             {"ligne":"12 rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","complement":""}""";
     private static final String TODAY = LocalDate.now(ZoneId.of("America/Guadeloupe")).toString();
 
+    /** Messages publiés dans le bus PubSub pendant le test. */
+    private static final List<Object> PUBLISHED = new ArrayList<>();
+
+    @TestConfiguration
+    static class CaptureBus {
+        @Bean
+        @Primary
+        OrderEventPublisher capture() {
+            return PUBLISHED::add;
+        }
+    }
+
     @Autowired
     private MockMvc mvc;
+
+    @BeforeEach
+    void clearBus() {
+        PUBLISHED.clear();
+    }
+
+    private static OrderService.OrderValidated published() {
+        return (OrderService.OrderValidated) PUBLISHED.getLast();
+    }
 
     private ResultActions send(final String url, final String json) throws Exception {
         return mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(url)
@@ -138,8 +171,49 @@ class OrderFirstApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderNumber").value(startsWith("CMD-")))
                 .andExpect(jsonPath("$.cashDue").value(149.0));
+        // L'offre vendue est recopiée dans le message : bl-60 22,99 + Multi-SIM 3 − Open ML 10, puis −10 € pendant 6 mois.
+        final var offer = published().offer();
+        assertEquals("bl-60", offer.id());
+        assertEquals(List.of("multisim"), offer.options().stream().map(Model.OfferOption::id).toList());
+        assertEquals("promo-10e-6m", offer.promos().getFirst().id());
+        assertEquals(new OrderService.OpenMlApplied("0690654321", 10), offer.openMl());
+        assertEquals(15.99, offer.monthlyPrice());
+        assertEquals(5.99, offer.monthlyPriceDuringPromo());
         mvc.perform(get("/api/v1/numbers/available")).andExpect(jsonPath("$").value(not(hasItem("0690123481"))));
         send("/api/v1/hardware/iccid-checks", "{\"iccid\":\"8933010000000000019\"}").andExpect(jsonPath("$.result").value("inconnu"));
+    }
+
+    @Test
+    void catalogOffersCarryTheirOptionsAndPromos() throws Exception {
+        mvc.perform(get("/api/v1/catalog/offers"))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].promos[0].monthlyDiscount").value(hasItem(10.0)))
+                .andExpect(jsonPath("$[?(@.id == 'bl-120')].options[?(@.id == 'europe')].included").value(hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id == 'nb-200')].options[?(@.id == 'international')].price").value(hasItem(8.0)))
+                .andExpect(jsonPath("$[?(@.id == 'pp-classique')].openMl.eligible").value(hasItem(false)));
+        mvc.perform(get("/api/v1/catalog/options")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void optionsMustBelongToTheOffer() throws Exception {
+        send("/api/v1/contracts", """
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-60","options":["international"]}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message").value("Option non proposée avec cette offre."));
+    }
+
+    @Test
+    void includedOptionIsNeitherAddedNorRemoved() throws Exception {
+        // Ligne pro en Forfait 200 Go : Europe incluse, Appels internationaux à 8 € déjà actifs.
+        final var unchanged = """
+                {"flow":"options","customerId":"CL-000201","lineMsisdn":"0690400500","options":["international","europe"],
+                 "cgvAccepted":true,"privacyAccepted":true}""";
+        send("/api/v1/orders", unchanged).andExpect(status().isBadRequest());
+        send("/api/v1/orders", unchanged.replace("\"europe\"", "\"multisim\"")).andExpect(status().isCreated());
+        final var change = published().optionsChange();
+        assertEquals(List.of("multisim"), change.added().stream().map(Model.OfferOption::id).toList());
+        assertTrue(change.removed().isEmpty());
+        assertEquals(3.0, change.monthlyDelta());
+        assertNull(published().offer());
     }
 
     @Test

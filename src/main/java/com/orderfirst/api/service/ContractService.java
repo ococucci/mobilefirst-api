@@ -4,7 +4,6 @@ import com.orderfirst.api.domain.ApiException;
 import com.orderfirst.api.domain.Model;
 import com.orderfirst.api.domain.Model.Flow;
 import com.orderfirst.api.domain.Rules;
-import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.DocumentPort;
 import com.orderfirst.api.port.EpcPort;
 import com.orderfirst.api.port.RhocPort;
@@ -24,16 +23,14 @@ public class ContractService {
     private static final DateTimeFormatter WHEN = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.FRANCE);
 
     private final OrderService orders;
-    private final CataloguePort catalogue;
     private final RhocPort rhoc;
     private final EpcPort epc;
     private final DocumentPort documents;
     private final Clock clock;
 
-    public ContractService(final OrderService orders, final CataloguePort catalogue, final RhocPort rhoc,
+    public ContractService(final OrderService orders, final RhocPort rhoc,
                            final EpcPort epc, final DocumentPort documents, final Clock clock) {
         this.orders = orders;
-        this.catalogue = catalogue;
         this.rhoc = rhoc;
         this.epc = epc;
         this.documents = documents;
@@ -71,18 +68,25 @@ public class ContractService {
                     : "Nouveau numéro");
         }
         if (c.offer() != null) {
-            final var options = catalogue.options().stream().filter(o -> r.optionsOrEmpty().contains(o.id())).toList();
+            final var options = Rules.selectedOptions(c.offer(), r.optionsOrEmpty());
             final boolean openMl = !Rules.isBlank(r.openMlSponsor()) && Rules.isOpenMlAvailable(c.offer(), c.line())
                     && rhoc.isValidSponsor(r.openMlSponsor());
             if (c.line() != null) {
                 lines.add("Offre actuelle : " + c.line().offerLabel());
             }
             lines.add("Offre : " + c.offer().label() + " - " + euro(c.offer().price()) + "/mois");
-            options.forEach(o -> lines.add("Option : " + o.label() + " - " + euro(o.price()) + "/mois"));
+            options.forEach(o -> lines.add("Option : " + o.label() + " - " + (o.included() ? "incluse" : euro(o.price()) + "/mois")));
+            c.offer().promos().forEach(p -> lines.add("Remise : " + p.label()));
             if (openMl) {
                 lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie");
             }
-            lines.add("Mensualité : " + euro(Rules.monthly(c.offer(), options, openMl)) + "/mois");
+            final double monthly = Rules.monthly(c.offer(), r.optionsOrEmpty(), openMl);
+            lines.add("Mensualité : " + euro(monthly) + "/mois");
+            final var duringPromo = Rules.monthlyDuringPromo(c.offer(), monthly);
+            if (duringPromo != null) {
+                final int months = c.offer().promos().stream().mapToInt(Model.Promo::durationMonths).min().orElse(0);
+                lines.add("Les " + months + " premiers mois : " + euro(duringPromo) + "/mois");
+            }
         }
         if (r.sim() != null) {
             lines.add("SIM : " + (r.sim().type() == Model.SimType.esim ? "eSIM" : "SIM physique") + " - ICCID " + Rules.compact(r.sim().iccid()));

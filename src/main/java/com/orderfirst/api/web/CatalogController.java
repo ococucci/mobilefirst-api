@@ -1,14 +1,11 @@
 package com.orderfirst.api.web;
 
 import com.orderfirst.api.domain.Model;
-import com.orderfirst.api.domain.Model.MobileOption;
 import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.SimReason;
-import com.orderfirst.api.port.CataloguePort;
-import com.orderfirst.api.port.PromoAdvicePort;
 import com.orderfirst.api.port.RessourcePort;
 import com.orderfirst.api.port.RhocPort;
+import com.orderfirst.api.service.CatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,34 +20,21 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 public class CatalogController {
-    private final CataloguePort catalogue;
-    private final PromoAdvicePort promos;
+    private final CatalogService catalog;
     private final RessourcePort ressource;
     private final RhocPort rhoc;
 
-    public CatalogController(final CataloguePort catalogue, final PromoAdvicePort promos, final RessourcePort ressource, final RhocPort rhoc) {
-        this.catalogue = catalogue;
-        this.promos = promos;
+    public CatalogController(final CatalogService catalog, final RessourcePort ressource, final RhocPort rhoc) {
+        this.catalog = catalog;
         this.ressource = ressource;
         this.rhoc = rhoc;
     }
 
-    @Operation(summary = "Forfaits (Catalogue Castor)")
+    @Operation(summary = "Forfaits avec, pour chacun, ses options, ses remises (appliquées automatiquement) et l'éligibilité Open ML "
+            + "(Catalogue Castor et api-promo advice)")
     @GetMapping("/catalog/offers")
     public List<Offer> offers() {
-        return catalogue.offers();
-    }
-
-    @Operation(summary = "Options mobile (Catalogue Castor)")
-    @GetMapping("/catalog/options")
-    public List<MobileOption> options() {
-        return catalogue.options();
-    }
-
-    @Operation(summary = "Remises applicables (api-promo advice)")
-    @GetMapping("/catalog/promotions")
-    public List<Promo> promotions() {
-        return promos.promos();
+        return catalog.offers();
     }
 
     @Operation(summary = "Raisons de changement de SIM (frais de 10 € pour perte ou vol)")
