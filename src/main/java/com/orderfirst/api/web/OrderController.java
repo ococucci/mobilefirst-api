@@ -40,13 +40,15 @@ public class OrderController {
         return new ContractResponse(id, "/api/v1/contracts/" + id);
     }
 
-    @Operation(summary = "Téléchargement du contrat (PDF)")
+    @Operation(summary = "Téléchargement du contrat (PDF), 204 si le contrat est inconnu")
     @GetMapping(value = "/contracts/{documentId}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> download(@PathVariable final String documentId) {
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contrat-" + documentId + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(contracts.find(documentId));
+        return contracts.find(documentId)
+                .map(pdf -> ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contrat-" + documentId + ".pdf\"")
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(pdf))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @Operation(summary = "Valide et crée la commande ; elle est publiée dans le bus PubSub")

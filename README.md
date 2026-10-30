@@ -21,19 +21,23 @@ Prérequis : Java 21.
 
 ## Endpoints
 
-Préfixe : `/api/v1`. Les erreurs sortent au format ProblemDetail (RFC 7807) :
+Préfixe : `/api/v1`. Une recherche sans résultat répond **204 No Content** (corps vide) : numéro inconnu,
+aucun client existant, client ou contrat inconnu en lecture. Ce n'est pas une erreur.
+
+Les erreurs sortent au format ProblemDetail (RFC 7807) :
 
 - **400 Saisie invalide** : la propriété `errors` liste chaque champ en erreur (`field` en chemin JSON, `message`
   identique à celui affiché par le front), pour placer le message sous le bon champ ;
-- **404 Introuvable** : client, ligne, commande ou contrat inconnu ;
+- **404 Introuvable** : une action porte sur un élément inconnu (commande ou client inconnus, ligne qui
+  n'appartient pas au client…) ;
 - **422 Opération impossible** : règle de gestion bloquante (score rouge, client entreprise en acquisition,
   ligne avec commande en cours, ligne Card re-scorée orange ou rouge…).
 
 | Méthode et chemin | Usage | API du SI |
 | --- | --- | --- |
-| `GET /customers?msisdn=` | Identification par MSISDN (404 si inconnu) | Party |
-| `GET /customers/{id}` | Client par identifiant | Party |
-| `POST /customers/existence-checks` | Recherche d'existence avant création d'un client sans numéro | Party |
+| `GET /customers?msisdn=` | Identification par MSISDN (204 si le numéro est inconnu) | Party |
+| `GET /customers/{id}` | Client par identifiant (204 si inconnu) | Party |
+| `POST /customers/existence-checks` | Recherche d'existence avant création d'un client sans numéro : le client existant, ou 204 | Party |
 | `POST /customers` | Contrôle Préventel puis création (pas de création si score rouge) | api-scoring, Party |
 | `PUT /customers/{id}` | Étape Client : mise à jour, Préventel relancé si nom, prénom ou date de naissance changent | api-scoring, Party |
 | `GET /customers/{id}/pending-lines` | Lignes avec une commande en cours | api-order |
@@ -49,7 +53,7 @@ Préfixe : `/api/v1`. Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `POST /sepa-mandates` | Contrôle et stockage du mandat SEPA (signé hors outil) | api IML |
 | `GET /addresses?q=` | Complétion d'adresse | Api-ORAS |
 | `POST /contracts` | Génère le contrat de la commande et le stocke (sauf modification d'options) | api EPC, Api-document |
-| `GET /contracts/{documentId}` | Téléchargement du contrat (PDF) | Api-document |
+| `GET /contracts/{documentId}` | Téléchargement du contrat (PDF), 204 si inconnu | Api-document |
 | `POST /orders` | Valide et crée la commande, puis la publie dans le bus PubSub | api-order, PubSub |
 | `POST /orders/{orderNumber}/cash-payments` | Enregistre le paiement effectué en caisse | Enabler managePayment |
 

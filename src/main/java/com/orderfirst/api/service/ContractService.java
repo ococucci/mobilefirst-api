@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /** Contrat : généré par api EPC à partir de la commande contrôlée, puis stocké par Api-document. */
 @Service
@@ -48,8 +49,8 @@ public class ContractService {
         return documents.store(request.customerId(), epc.generateContract(title, lines(request, checked)));
     }
 
-    public byte[] find(final String documentId) {
-        return documents.find(documentId).orElseThrow(() -> ApiException.notFound("Contrat " + documentId + " introuvable."));
+    public Optional<byte[]> find(final String documentId) {
+        return documents.find(documentId);
     }
 
     private List<String> lines(final OrderRequest r, final OrderService.Checked c) {

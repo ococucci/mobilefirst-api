@@ -70,7 +70,12 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.id").value("CL-000101"))
                 .andExpect(jsonPath("$.lines[2].isCard").value(true))
                 .andExpect(jsonPath("$.lines[2].monthlyPrice").isEmpty());
-        mvc.perform(get("/api/v1/customers").param("msisdn", "0690000001")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/customers").param("msisdn", "0690000001"))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+        mvc.perform(get("/api/v1/customers/CL-000101")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/customers/CL-999999")).andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/contracts/DOC-inconnu")).andExpect(status().isNoContent());
         mvc.perform(get("/api/v1/customers").param("msisdn", "12"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("msisdn"));
@@ -94,7 +99,10 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder(
                         "identity.nom", "identity.prenom", "identity.dateNaissance", "identity.pieceType", "identity.pieceNumero")));
         send("/api/v1/customers/existence-checks", "{\"identity\":" + MARIE + "}")
-                .andExpect(jsonPath("$.existing.id").value("CL-000101"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("CL-000101"));
+        send("/api/v1/customers/existence-checks", "{\"identity\":" + MARIE.replace("Dupont", "Durand") + "}")
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -227,5 +235,7 @@ class OrderFirstApiTest {
         send("/api/v1/orders/" + number + "/cash-payments", "{\"amount\":10}")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reference").value(startsWith("PAY-")));
+        // Une action sur une commande inconnue reste une erreur 404, pas un succès 204.
+        send("/api/v1/orders/CMD-inconnue/cash-payments", "{\"amount\":10}").andExpect(status().isNotFound());
     }
 }

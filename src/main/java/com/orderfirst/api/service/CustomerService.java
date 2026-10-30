@@ -33,11 +33,16 @@ public class CustomerService {
         this.clock = clock;
     }
 
-    public Customer byMsisdn(final String msisdn) {
+    /** Recherche par MSISDN ; vide si le numéro est inconnu (le front passe alors à la saisie de l'identité). */
+    public Optional<Customer> findByMsisdn(final String msisdn) {
         if (!Rules.isValidMsisdn(msisdn)) {
             new Validation().check(true, "msisdn", Validation.MSISDN_MESSAGE).throwIfInvalid();
         }
-        return party.findByMsisdn(msisdn).orElseThrow(() -> ApiException.notFound("Aucun client pour le numéro " + Rules.digits(msisdn) + "."));
+        return party.findByMsisdn(msisdn);
+    }
+
+    public Optional<Customer> findById(final String id) {
+        return party.findById(id);
     }
 
     public Customer byId(final String id) {
