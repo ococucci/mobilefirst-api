@@ -9,6 +9,7 @@ import com.orderfirst.api.port.RessourcePort;
 import com.orderfirst.api.port.RhocPort;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,8 +29,8 @@ final class CatalogueStubs {
     @Stub
     static class PromoAdvice implements PromoAdvicePort {
         @Override
-        public List<Promo> promosFor(final String offerId) {
-            return StubData.PROMOS.getOrDefault(offerId, List.of());
+        public Optional<Promo> promoFor(final String offerId) {
+            return Optional.ofNullable(StubData.PROMOS.get(offerId));
         }
     }
 

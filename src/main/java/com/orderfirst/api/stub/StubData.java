@@ -87,7 +87,7 @@ final class StubData {
 
     private static Offer offer(final String id, final FamilyId family, final String label, final String detail,
                                final double price, final OpenMl openMl, final OfferOption... options) {
-        return new Offer(id, family, label, detail, price, openMl, List.of(options), List.of());
+        return new Offer(id, family, label, detail, price, openMl, List.of(options), null);
     }
 
     /** Offres Castor et options proposées avec chacune (prix propres à l'offre, options incluses). */
@@ -109,12 +109,12 @@ final class StubData {
             offer("home-5g", FamilyId.internet, "4G/5G Home", "Internet illimité à domicile", 34.99, OpenMl.of(10)),
             offer("pp-classique", FamilyId.prepaye, "Carte Prépayée", "Sans engagement, rechargeable", 0, OpenMl.NONE));
 
-    /** Remises api-promo advice, par offre. */
-    static final Map<String, List<Promo>> PROMOS = Map.of(
-            "bl-60", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
-            "bl-120", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
-            "nb-100", List.of(new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6)),
-            "home-5g", List.of(new Promo("promo-5e-12m", "−5 € / 12 mois", 5, 12)));
+    /** Remise api-promo advice de chaque offre éligible (une seule par offre). */
+    static final Map<String, Promo> PROMOS = Map.of(
+            "bl-60", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
+            "bl-120", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
+            "nb-100", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
+            "home-5g", new Promo("promo-5e-12m", "−5 € / 12 mois", 5, 12));
 
     /** N° sponsor Open ML reconnus par api RHOC. */
     static final List<String> SPONSORS = List.of("0690654321", "0696112233");

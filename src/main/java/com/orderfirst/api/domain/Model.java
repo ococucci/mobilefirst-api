@@ -67,16 +67,16 @@ public final class Model {
 
     /**
      * Offre du catalogue avec ce qui en dépend : éligibilité Open ML, options proposées (prix propres à l'offre,
-     * éventuellement incluses) et remises appliquées automatiquement.
+     * éventuellement incluses) et remise appliquée automatiquement (une seule par offre, null s'il n'y en a pas).
      */
     public record Offer(String id, FamilyId family, String label, String detail, double price, OpenMl openMl,
-                        List<OfferOption> options, List<Promo> promos) {
+                        List<OfferOption> options, Promo promo) {
         public java.util.Optional<OfferOption> option(final String optionId) {
             return options.stream().filter(o -> o.id().equals(optionId)).findFirst();
         }
 
-        public Offer withPromos(final List<Promo> promos) {
-            return new Offer(id, family, label, detail, price, openMl, options, promos);
+        public Offer withPromo(final Promo promo) {
+            return new Offer(id, family, label, detail, price, openMl, options, promo);
         }
     }
 
@@ -93,7 +93,7 @@ public final class Model {
     public record OfferOption(String id, String label, double price, boolean included) {
     }
 
-    /** Remise commerciale appliquée automatiquement à l'offre (api-promo advice). */
+    /** Remise commerciale appliquée automatiquement à l'offre (api-promo advice) ; les remises ne se cumulent pas. */
     public record Promo(String id, String label, double monthlyDiscount, int durationMonths) {
     }
 

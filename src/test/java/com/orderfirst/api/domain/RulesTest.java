@@ -27,7 +27,7 @@ class RulesTest {
     private static Offer offer(final FamilyId family, final double price, final boolean entryLevel) {
         return new Offer("o", family, "Offre", "", price,
                 family == FamilyId.prepaye ? OpenMl.NONE : OpenMl.of(entryLevel ? 5 : 10),
-                List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), List.of());
+                List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), null);
     }
 
     private static Line line(final boolean card) {
@@ -71,7 +71,7 @@ class RulesTest {
     void promosApplyAutomatically() {
         final var offer = offer(FamilyId.bloque, 22.99, false);
         assertNull(Rules.monthlyDuringPromo(offer, 17.99));
-        final var promoted = offer.withPromos(List.of(new Promo("p", "−10 € / 6 mois", 10, 6)));
+        final var promoted = offer.withPromo(new Promo("p", "−10 € / 6 mois", 10, 6));
         assertEquals(7.99, Rules.monthlyDuringPromo(promoted, 17.99));
         assertEquals(0, Rules.monthlyDuringPromo(promoted, 4));
     }

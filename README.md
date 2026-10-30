@@ -42,7 +42,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `PUT /customers/{id}` | Étape Client : mise à jour, Préventel relancé si nom, prénom ou date de naissance changent | api-scoring, Party |
 | `GET /customers/{id}/pending-lines` | Lignes avec une commande en cours | api-order |
 | `POST /customers/{id}/lines/{msisdn}/rescoring` | Re-scoring d'une ligne Card avant changement de forfait | api-scoring |
-| `GET /catalog/offers` | Forfaits, avec pour chacun ses options, ses remises et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
+| `GET /catalog/offers` | Forfaits, avec pour chacun ses options, sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
 | `GET /catalog/sim-reasons`, `GET /catalog/donor-operators` | Listes de référence | — |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
 | `POST /open-ml/sponsor-checks` | Validation du N° sponsor Open ML | api RHOC |
@@ -83,7 +83,8 @@ Chaque offre de `GET /catalog/offers` porte ce qui dépend d'elle :
   gamme, 10 € sinon ; non éligible pour la Carte Prépayée) ;
 - `options` : options proposées avec cette offre, à un prix propre à l'offre ; une option `included` est gratuite
   et toujours active ;
-- `promos` : remises api-promo advice, appliquées automatiquement (`monthlyDiscount`, `durationMonths`).
+- `promo` : remise api-promo advice, appliquée automatiquement (`monthlyDiscount`, `durationMonths`) ; une seule
+  par offre (les remises ne se cumulent pas), `null` si l'offre n'en a pas.
 
 Une commande ne peut porter que des options proposées avec l'offre choisie (ou, pour une modification d'options,
 avec l'offre actuelle de la ligne).
@@ -93,16 +94,15 @@ avec l'offre actuelle de la ligne).
 En plus de l'en-tête (`orderNumber`, `createdAt`, `flow`, `customerId`, `msisdn`, `cashDue`) et de la commande
 saisie (`order`), le message recopie ce qui a été vendu, avec libellés et prix du jour de la vente :
 
-- acquisition et changement de forfait : `offer` (offre, options actives dont les incluses, remises, Open ML
-  appliqué, `monthlyPrice` et `monthlyPriceDuringPromo`, mensualité pendant les remises cumulées, sur la durée de
-  la plus courte) ;
+- acquisition et changement de forfait : `offer` (offre, options actives dont les incluses, remise, Open ML
+  appliqué, `monthlyPrice` et `monthlyPriceDuringPromo`, mensualité pendant la durée de la remise) ;
 - modification d'options : `optionsChange` (options ajoutées et retirées, `monthlyDelta`).
 
 ```json
 "offer": {
   "id": "bl-60", "label": "Forfait bloqué 60 Go", "price": 22.99,
   "options": [ { "id": "europe", "label": "Option Europe 10 Go", "price": 5.0, "included": false } ],
-  "promos": [ { "id": "promo-10e-6m", "label": "−10 € / 6 mois", "monthlyDiscount": 10.0, "durationMonths": 6 } ],
+  "promo": { "id": "promo-10e-6m", "label": "−10 € / 6 mois", "monthlyDiscount": 10.0, "durationMonths": 6 },
   "openMl": { "sponsor": "0690654321", "monthlyDiscount": 10.0 },
   "monthlyPrice": 17.99,
   "monthlyPriceDuringPromo": 7.99

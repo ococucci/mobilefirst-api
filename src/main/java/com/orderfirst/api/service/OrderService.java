@@ -89,8 +89,8 @@ public class OrderService {
                                  OrderRequest order) {
     }
 
-    /** Offre vendue : options actives (incluses comprises), remises appliquées, Open ML et mensualités calculées. */
-    public record OfferSnapshot(String id, String label, double price, List<OfferOption> options, List<Promo> promos,
+    /** Offre vendue : options actives (incluses comprises), remise appliquée, Open ML et mensualités calculées. */
+    public record OfferSnapshot(String id, String label, double price, List<OfferOption> options, Promo promo,
                                 OpenMlApplied openMl, double monthlyPrice, Double monthlyPriceDuringPromo) {
     }
 
@@ -346,7 +346,7 @@ public class OrderService {
         final boolean openMl = !isBlank(r.openMlSponsor()) && Rules.isOpenMlAvailable(offer, c.line());
         final double monthly = Rules.monthly(offer, r.optionsOrEmpty(), openMl);
         return new OfferSnapshot(offer.id(), offer.label(), offer.price(), Rules.selectedOptions(offer, r.optionsOrEmpty()),
-                offer.promos(), openMl ? new OpenMlApplied(Rules.digits(r.openMlSponsor()), Rules.openMlDiscount(offer)) : null,
+                offer.promo(), openMl ? new OpenMlApplied(Rules.digits(r.openMlSponsor()), Rules.openMlDiscount(offer)) : null,
                 monthly, Rules.monthlyDuringPromo(offer, monthly));
     }
 

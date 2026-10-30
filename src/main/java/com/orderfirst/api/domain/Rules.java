@@ -5,7 +5,6 @@ import com.orderfirst.api.domain.Model.Identity;
 import com.orderfirst.api.domain.Model.Line;
 import com.orderfirst.api.domain.Model.OfferOption;
 import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.Promo;
 import com.orderfirst.api.domain.Model.Score;
 
 import java.math.BigInteger;
@@ -132,15 +131,9 @@ public final class Rules {
         return Math.max(0, round(offer.price() + opts - (openMl ? openMlDiscount(offer) : 0)));
     }
 
-    /**
-     * Mensualité pendant les remises (appliquées automatiquement) : toutes les remises de l'offre cumulées,
-     * sur la durée de la plus courte. Null si l'offre n'a pas de remise.
-     */
+    /** Mensualité pendant la remise de l'offre (appliquée automatiquement) ; null si l'offre n'a pas de remise. */
     public static Double monthlyDuringPromo(final Offer offer, final double monthly) {
-        if (offer.promos().isEmpty()) {
-            return null;
-        }
-        return Math.max(0, round(monthly - offer.promos().stream().mapToDouble(Promo::monthlyDiscount).sum()));
+        return offer.promo() == null ? null : Math.max(0, round(monthly - offer.promo().monthlyDiscount()));
     }
 
     public static double simChangeFee(final String reasonId) {

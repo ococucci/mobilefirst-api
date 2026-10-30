@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-/** Offres complètes : catalogue Castor (offres et options) et remises api-promo advice. */
+/** Offres complètes : catalogue Castor (offres et options) et remise api-promo advice. */
 @Service
 public class CatalogService {
     private final CataloguePort catalogue;
@@ -20,11 +20,15 @@ public class CatalogService {
     }
 
     public List<Offer> offers() {
-        return catalogue.offers().stream().map(o -> o.withPromos(promos.promosFor(o.id()))).toList();
+        return catalogue.offers().stream().map(this::withPromo).toList();
     }
 
     public Optional<Offer> offer(final String id) {
         return catalogue.offers().stream().filter(o -> o.id().equals(id)).findFirst()
-                .map(o -> o.withPromos(promos.promosFor(o.id())));
+                .map(this::withPromo);
+    }
+
+    private Offer withPromo(final Offer offer) {
+        return offer.withPromo(promos.promoFor(offer.id()).orElse(null));
     }
 }

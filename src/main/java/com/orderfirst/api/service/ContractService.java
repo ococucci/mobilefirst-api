@@ -76,7 +76,9 @@ public class ContractService {
             }
             lines.add("Offre : " + c.offer().label() + " - " + euro(c.offer().price()) + "/mois");
             options.forEach(o -> lines.add("Option : " + o.label() + " - " + (o.included() ? "incluse" : euro(o.price()) + "/mois")));
-            c.offer().promos().forEach(p -> lines.add("Remise : " + p.label()));
+            if (c.offer().promo() != null) {
+                lines.add("Remise : " + c.offer().promo().label());
+            }
             if (openMl) {
                 lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie");
             }
@@ -84,8 +86,7 @@ public class ContractService {
             lines.add("Mensualité : " + euro(monthly) + "/mois");
             final var duringPromo = Rules.monthlyDuringPromo(c.offer(), monthly);
             if (duringPromo != null) {
-                final int months = c.offer().promos().stream().mapToInt(Model.Promo::durationMonths).min().orElse(0);
-                lines.add("Les " + months + " premiers mois : " + euro(duringPromo) + "/mois");
+                lines.add("Les " + c.offer().promo().durationMonths() + " premiers mois : " + euro(duringPromo) + "/mois");
             }
         }
         if (r.sim() != null) {

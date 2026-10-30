@@ -30,7 +30,7 @@ public class CatalogController {
         this.rhoc = rhoc;
     }
 
-    @Operation(summary = "Forfaits avec, pour chacun, ses options, ses remises (appliquées automatiquement) et l'éligibilité Open ML "
+    @Operation(summary = "Forfaits avec, pour chacun, ses options, sa remise (appliquée automatiquement, une seule par offre) et l'éligibilité Open ML "
             + "(Catalogue Castor et api-promo advice)")
     @GetMapping("/catalog/offers")
     public List<Offer> offers() {

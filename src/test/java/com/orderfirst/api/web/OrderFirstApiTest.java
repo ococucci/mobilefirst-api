@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -175,7 +176,7 @@ class OrderFirstApiTest {
         final var offer = published().offer();
         assertEquals("bl-60", offer.id());
         assertEquals(List.of("multisim"), offer.options().stream().map(Model.OfferOption::id).toList());
-        assertEquals("promo-10e-6m", offer.promos().getFirst().id());
+        assertEquals("promo-10e-6m", offer.promo().id());
         assertEquals(new OrderService.OpenMlApplied("0690654321", 10), offer.openMl());
         assertEquals(15.99, offer.monthlyPrice());
         assertEquals(5.99, offer.monthlyPriceDuringPromo());
@@ -186,7 +187,8 @@ class OrderFirstApiTest {
     @Test
     void catalogOffersCarryTheirOptionsAndPromos() throws Exception {
         mvc.perform(get("/api/v1/catalog/offers"))
-                .andExpect(jsonPath("$[?(@.id == 'bl-60')].promos[0].monthlyDiscount").value(hasItem(10.0)))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].promo.monthlyDiscount").value(hasItem(10.0)))
+                .andExpect(jsonPath("$[?(@.id == 'bl-20')].promo").value(hasItem(nullValue())))
                 .andExpect(jsonPath("$[?(@.id == 'bl-120')].options[?(@.id == 'europe')].included").value(hasItem(true)))
                 .andExpect(jsonPath("$[?(@.id == 'nb-200')].options[?(@.id == 'international')].price").value(hasItem(8.0)))
                 .andExpect(jsonPath("$[?(@.id == 'pp-classique')].openMl.eligible").value(hasItem(false)));

@@ -2,9 +2,9 @@ package com.orderfirst.api.port;
 
 import com.orderfirst.api.domain.Model.Promo;
 
-import java.util.List;
+import java.util.Optional;
 
-/** api-promo advice : remises applicables à une offre éligible (appliquées automatiquement). */
+/** api-promo advice : remise applicable à une offre éligible (une seule, appliquée automatiquement). */
 public interface PromoAdvicePort {
-    List<Promo> promosFor(String offerId);
+    Optional<Promo> promoFor(String offerId);
 }
