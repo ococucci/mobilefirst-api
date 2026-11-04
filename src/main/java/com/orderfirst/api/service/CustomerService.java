@@ -1,11 +1,13 @@
 package com.orderfirst.api.service;
 
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.Customer;
+import com.orderfirst.api.model.CustomerCreation;
+import com.orderfirst.api.model.CustomerUpdate;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Line;
+import com.orderfirst.api.model.Score;
 import com.orderfirst.api.domain.ApiException;
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Customer;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.Score;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.domain.Validation;
 import com.orderfirst.api.port.OrderPort;
@@ -55,40 +57,36 @@ public class CustomerService {
         return party.findExisting(identity);
     }
 
-    public record Creation(Score score, Customer customer) {
-    }
 
     /** Contrôle Préventel puis création du client ; pas de création si le score est rouge. */
-    public Creation create(final Identity identity, final Address address) {
+    public CustomerCreation create(final Identity identity, final Address address) {
         new Validation().identity("identity", identity, false, today()).throwIfInvalid();
         final var score = scoring.preventel(identity);
         if (score == Score.rouge) {
-            return new Creation(score, null);
+            return new CustomerCreation(score, null);
         }
-        return new Creation(score, party.create(identity, address == null ? new Address("", "", "", "") : address, score));
+        return new CustomerCreation(score, party.create(identity, address == null ? new Address("", "", "", "") : address, score));
     }
 
-    public record Update(Score score, boolean rescored, Customer customer) {
-    }
 
     /**
      * Mise à jour à l'étape Client. Le nom, le prénom ou la date de naissance modifiés relancent Préventel ;
      * avec un score rouge, rien n'est enregistré.
      */
-    public Update update(final String id, final Identity identity, final Address address) {
+    public CustomerUpdate update(final String id, final Identity identity, final Address address) {
         final var current = byId(id);
         new Validation().identity("identity", identity, true, today()).address("address", address).throwIfInvalid();
-        final boolean rescore = Rules.identityChangeRequiresRescore(current.identity(), identity);
-        final var score = rescore ? scoring.preventel(identity) : current.score();
+        final boolean rescore = Rules.identityChangeRequiresRescore(current.getIdentity(), identity);
+        final var score = rescore ? scoring.preventel(identity) : current.getScore();
         if (score == Score.rouge) {
-            return new Update(score, rescore, current);
+            return new CustomerUpdate(score, rescore, current);
         }
-        return new Update(score, rescore, party.update(id, identity, address, score));
+        return new CustomerUpdate(score, rescore, party.update(id, identity, address, score));
     }
 
     /** Lignes du client ayant une commande en cours (api-order) : elles ne peuvent pas être modifiées. */
     public List<String> pendingLines(final String id) {
-        return orders.linesWithPendingOrder(byId(id).lines().stream().map(Line::msisdn).toList());
+        return orders.linesWithPendingOrder(byId(id).getLines().stream().map(Line::getMsisdn).toList());
     }
 
     /** Re-scoring Préventel d'une ligne Card avant un changement de forfait. */
@@ -103,8 +101,8 @@ public class CustomerService {
 
     public static Line line(final Customer customer, final String msisdn) {
         final var n = Rules.digits(msisdn);
-        return customer.lines().stream().filter(l -> l.msisdn().equals(n)).findFirst()
-                .orElseThrow(() -> ApiException.notFound("La ligne " + n + " n'appartient pas au client " + customer.id() + "."));
+        return customer.getLines().stream().filter(l -> l.getMsisdn().equals(n)).findFirst()
+                .orElseThrow(() -> ApiException.notFound("La ligne " + n + " n'appartient pas au client " + customer.getId() + "."));
     }
 
     private LocalDate today() {

@@ -1,8 +1,11 @@
 package com.orderfirst.api.service;
 
+import com.orderfirst.api.model.Flow;
+import com.orderfirst.api.model.NumberMode;
+import com.orderfirst.api.model.OrderRequest;
+import com.orderfirst.api.model.SimType;
+import com.orderfirst.api.domain.ReferenceData;
 import com.orderfirst.api.domain.ApiException;
-import com.orderfirst.api.domain.Model;
-import com.orderfirst.api.domain.Model.Flow;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.DocumentPort;
 import com.orderfirst.api.port.EpcPort;
@@ -38,12 +41,12 @@ public class ContractService {
     }
 
     public String generate(final OrderRequest request) {
-        if (request != null && !Rules.requiresContract(request.flow())) {
+        if (request != null && !Rules.requiresContract(request.getFlow())) {
             throw ApiException.rule("Aucun contrat n'est généré pour une modification d'options.");
         }
         final var checked = orders.validate(request, false);
-        final var title = "Contrat - " + label(request.flow());
-        return documents.store(request.customerId(), epc.generateContract(title, lines(request, checked)));
+        final var title = "Contrat - " + label(request.getFlow());
+        return documents.store(request.getCustomerId(), epc.generateContract(title, lines(request, checked)));
     }
 
     public Optional<byte[]> find(final String documentId) {
@@ -52,49 +55,49 @@ public class ContractService {
 
     private List<String> lines(final OrderRequest r, final OrderService.Checked c) {
         final var customer = c.customer();
-        final var identity = r.flow() == Flow.acquisition ? r.holder() : customer.identity();
+        final var identity = r.getFlow() == Flow.acquisition ? r.getHolder() : customer.getIdentity();
         final var lines = new ArrayList<String>();
-        lines.add("Objet : " + label(r.flow()));
-        lines.add("Client : " + customer.id() + " - " + identity.civilite() + " " + identity.prenom() + " " + identity.nom());
-        lines.add(customer.company() != null
-                ? "Entreprise : " + customer.company().raisonSociale() + " - SIREN " + customer.company().siren()
-                : "Pièce : " + identity.pieceType() + " " + identity.pieceNumero());
+        lines.add("Objet : " + label(r.getFlow()));
+        lines.add("Client : " + customer.getId() + " - " + identity.getCivilite() + " " + identity.getPrenom() + " " + identity.getNom());
+        lines.add(customer.getCompany() != null
+                ? "Entreprise : " + customer.getCompany().getRaisonSociale() + " - SIREN " + customer.getCompany().getSiren()
+                : "Pièce : " + identity.getPieceType() + " " + identity.getPieceNumero());
         lines.add("Ligne : " + c.msisdn());
-        if (r.flow() == Flow.acquisition) {
-            final var a = r.billingAddress();
-            lines.add("Adresse de facturation : " + a.ligne() + ", " + a.codePostal() + " " + a.commune());
-            lines.add(r.number().mode() == OrderRequest.NumberChoice.Mode.portabilite
-                    ? "Portabilité depuis " + r.number().operator() + " le " + r.number().portingDate()
+        if (r.getFlow() == Flow.acquisition) {
+            final var a = r.getBillingAddress();
+            lines.add("Adresse de facturation : " + a.getLigne() + ", " + a.getCodePostal() + " " + a.getCommune());
+            lines.add(r.getNumber().getMode() == NumberMode.portabilite
+                    ? "Portabilité depuis " + r.getNumber().getOperator() + " le " + r.getNumber().getPortingDate()
                     : "Nouveau numéro");
         }
         if (c.offer() != null) {
-            final var options = Rules.selectedOptions(c.offer(), r.optionsOrEmpty());
-            final boolean openMl = !Rules.isBlank(r.openMlSponsor()) && Rules.isOpenMlAvailable(c.offer(), c.line())
-                    && rhoc.isValidSponsor(r.openMlSponsor());
+            final var options = Rules.selectedOptions(c.offer(), r.getOptionsOrEmpty());
+            final boolean openMl = !Rules.isBlank(r.getOpenMlSponsor()) && Rules.isOpenMlAvailable(c.offer(), c.line())
+                    && rhoc.isValidSponsor(r.getOpenMlSponsor());
             if (c.line() != null) {
-                lines.add("Offre actuelle : " + c.line().offerLabel());
+                lines.add("Offre actuelle : " + c.line().getOfferLabel());
             }
-            lines.add("Offre : " + c.offer().label() + " - " + euro(c.offer().price()) + "/mois");
-            options.forEach(o -> lines.add("Option : " + o.label() + " - " + (o.included() ? "incluse" : euro(o.price()) + "/mois")));
-            if (c.offer().promo() != null) {
-                lines.add("Remise : " + c.offer().promo().label());
+            lines.add("Offre : " + c.offer().getLabel() + " - " + euro(c.offer().getPrice()) + "/mois");
+            options.forEach(o -> lines.add("Option : " + o.getLabel() + " - " + (o.isIncluded() ? "incluse" : euro(o.getPrice()) + "/mois")));
+            if (c.offer().getPromo() != null) {
+                lines.add("Remise : " + c.offer().getPromo().getLabel());
             }
             if (openMl) {
                 lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie");
             }
-            final double monthly = Rules.monthly(c.offer(), r.optionsOrEmpty(), openMl);
+            final double monthly = Rules.monthly(c.offer(), r.getOptionsOrEmpty(), openMl);
             lines.add("Mensualité : " + euro(monthly) + "/mois");
             final var duringPromo = Rules.monthlyDuringPromo(c.offer(), monthly);
             if (duringPromo != null) {
-                lines.add("Les " + c.offer().promo().durationMonths() + " premiers mois : " + euro(duringPromo) + "/mois");
+                lines.add("Les " + c.offer().getPromo().getDurationMonths() + " premiers mois : " + euro(duringPromo) + "/mois");
             }
         }
-        if (r.sim() != null) {
-            lines.add("SIM : " + (r.sim().type() == Model.SimType.esim ? "eSIM" : "SIM physique") + " - ICCID " + Rules.compact(r.sim().iccid()));
+        if (r.getSim() != null) {
+            lines.add("SIM : " + (r.getSim().getType() == SimType.esim ? "eSIM" : "SIM physique") + " - ICCID " + Rules.compact(r.getSim().getIccid()));
         }
-        if (r.flow() == Flow.sim) {
-            Model.SIM_REASONS.stream().filter(x -> x.id().equals(r.simReason())).findFirst()
-                    .ifPresent(reason -> lines.add("Raison : " + reason.label()));
+        if (r.getFlow() == Flow.sim) {
+            ReferenceData.simReasons().stream().filter(x -> x.getId().equals(r.getSimReason())).findFirst()
+                    .ifPresent(reason -> lines.add("Raison : " + reason.getLabel()));
         }
         if (c.cashDue() > 0) {
             lines.add("A régler en caisse : " + euro(c.cashDue()));

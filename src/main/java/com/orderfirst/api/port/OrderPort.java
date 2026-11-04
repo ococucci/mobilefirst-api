@@ -1,5 +1,6 @@
 package com.orderfirst.api.port;
 
+import com.orderfirst.api.model.CreatedOrder;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -10,7 +11,4 @@ public interface OrderPort {
     List<String> linesWithPendingOrder(Collection<String> msisdns);
 
     CreatedOrder create(String msisdn, Map<String, Object> order);
-
-    record CreatedOrder(String orderNumber, Instant createdAt) {
-    }
 }

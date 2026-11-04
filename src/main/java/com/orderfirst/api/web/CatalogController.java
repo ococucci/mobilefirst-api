@@ -1,8 +1,8 @@
 package com.orderfirst.api.web;
 
-import com.orderfirst.api.domain.Model;
-import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.SimReason;
+import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.SimReason;
+import com.orderfirst.api.domain.ReferenceData;
 import com.orderfirst.api.port.RessourcePort;
 import com.orderfirst.api.port.RhocPort;
 import com.orderfirst.api.service.CatalogService;
@@ -40,13 +40,13 @@ public class CatalogController {
     @Operation(summary = "Raisons de changement de SIM (frais de 10 € pour perte ou vol)")
     @GetMapping("/catalog/sim-reasons")
     public List<SimReason> simReasons() {
-        return Model.SIM_REASONS;
+        return ReferenceData.simReasons();
     }
 
     @Operation(summary = "Opérateurs donneurs pour la portabilité")
     @GetMapping("/catalog/donor-operators")
     public List<String> donorOperators() {
-        return Model.DONOR_OPERATORS;
+        return ReferenceData.DONOR_OPERATORS;
     }
 
     @Operation(summary = "Numéros de mobile disponibles (api ressource)")

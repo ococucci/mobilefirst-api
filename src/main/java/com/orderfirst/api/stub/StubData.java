@@ -1,21 +1,21 @@
 package com.orderfirst.api.stub;
 
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Company;
-import com.orderfirst.api.domain.Model.Customer;
-import com.orderfirst.api.domain.Model.CustomerType;
-import com.orderfirst.api.domain.Model.FamilyId;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.OfferOption;
-import com.orderfirst.api.domain.Model.OpenMl;
-import com.orderfirst.api.domain.Model.PieceType;
-import com.orderfirst.api.domain.Model.Promo;
-import com.orderfirst.api.domain.Model.Score;
-import com.orderfirst.api.domain.Model.SimType;
-import com.orderfirst.api.domain.Model.Terminal;
-import com.orderfirst.api.port.OrasPort.AddressSuggestion;
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.AddressSuggestion;
+import com.orderfirst.api.model.Company;
+import com.orderfirst.api.model.Customer;
+import com.orderfirst.api.model.CustomerType;
+import com.orderfirst.api.model.FamilyId;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Line;
+import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.OfferOption;
+import com.orderfirst.api.model.OpenMl;
+import com.orderfirst.api.model.PieceType;
+import com.orderfirst.api.model.Promo;
+import com.orderfirst.api.model.Score;
+import com.orderfirst.api.model.SimType;
+import com.orderfirst.api.model.Terminal;
 
 import java.util.List;
 import java.util.Map;
@@ -82,7 +82,7 @@ final class StubData {
 
     private static OfferOption included(final String id) {
         final var o = option(id, 0);
-        return new OfferOption(o.id(), o.label(), 0, true);
+        return new OfferOption(o.getId(), o.getLabel(), 0, true);
     }
 
     private static Offer offer(final String id, final FamilyId family, final String label, final String detail,
@@ -107,7 +107,7 @@ final class StubData {
             offer("ie-4g", FamilyId.internet, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, OpenMl.of(5),
                     option("securite", 2)),
             offer("home-5g", FamilyId.internet, "4G/5G Home", "Internet illimité à domicile", 34.99, OpenMl.of(10)),
-            offer("pp-classique", FamilyId.prepaye, "Carte Prépayée", "Sans engagement, rechargeable", 0, OpenMl.NONE));
+            offer("pp-classique", FamilyId.prepaye, "Carte Prépayée", "Sans engagement, rechargeable", 0, OpenMl.none()));
 
     /** Remise api-promo advice de chaque offre éligible (une seule par offre). */
     static final Map<String, Promo> PROMOS = Map.of(

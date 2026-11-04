@@ -1,6 +1,6 @@
 package com.orderfirst.api.stub;
 
-import com.orderfirst.api.domain.Model.Terminal;
+import com.orderfirst.api.model.Terminal;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.ImlPort;
 import com.orderfirst.api.port.SiFinancierPort;

@@ -1,7 +1,7 @@
 package com.orderfirst.api.domain;
 
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Identity;
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.Identity;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -48,39 +48,39 @@ public final class Validation {
         if (i == null) {
             return check(true, prefix, "L'identité du titulaire est obligatoire.");
         }
-        check(isBlank(i.nom()), prefix + ".nom", "Le nom est obligatoire.");
-        check(isBlank(i.prenom()), prefix + ".prenom", "Le prénom est obligatoire.");
-        if (isBlank(i.dateNaissance())) {
+        check(isBlank(i.getNom()), prefix + ".nom", "Le nom est obligatoire.");
+        check(isBlank(i.getPrenom()), prefix + ".prenom", "Le prénom est obligatoire.");
+        if (isBlank(i.getDateNaissance())) {
             check(true, prefix + ".dateNaissance", "La date de naissance est obligatoire.");
         } else {
-            final var birth = parseDate(i.dateNaissance());
+            final var birth = parseDate(i.getDateNaissance());
             check(birth == null || birth.isBefore(LocalDate.of(1900, 1, 1)), prefix + ".dateNaissance", "Date de naissance invalide.");
             check(birth != null && !birth.isBefore(today), prefix + ".dateNaissance", "La date de naissance doit être dans le passé.");
         }
-        check(i.pieceType() == null, prefix + ".pieceType", "Le type de pièce est obligatoire.");
-        if (isBlank(i.pieceNumero())) {
+        check(i.getPieceType() == null, prefix + ".pieceType", "Le type de pièce est obligatoire.");
+        if (isBlank(i.getPieceNumero())) {
             check(true, prefix + ".pieceNumero", "Le n° de la pièce est obligatoire.");
         } else {
-            check(!Rules.isValidPieceNumber(i.pieceNumero()), prefix + ".pieceNumero", "N° invalide : 9 ou 12 lettres et chiffres.");
+            check(!Rules.isValidPieceNumber(i.getPieceNumero()), prefix + ".pieceNumero", "N° invalide : 9 ou 12 lettres et chiffres.");
         }
         if (full) {
-            check(isBlank(i.departementNaissance()), prefix + ".departementNaissance", "Le département de naissance est obligatoire.");
-            if (isBlank(i.mobileContact())) {
+            check(isBlank(i.getDepartementNaissance()), prefix + ".departementNaissance", "Le département de naissance est obligatoire.");
+            if (isBlank(i.getMobileContact())) {
                 check(true, prefix + ".mobileContact", "Le mobile de contact est obligatoire.");
             } else {
-                check(!Rules.isValidMsisdn(i.mobileContact()), prefix + ".mobileContact", MSISDN_MESSAGE);
+                check(!Rules.isValidMsisdn(i.getMobileContact()), prefix + ".mobileContact", MSISDN_MESSAGE);
             }
-            if (isBlank(i.email())) {
+            if (isBlank(i.getEmail())) {
                 check(true, prefix + ".email", "L'email est obligatoire.");
             } else {
-                check(!Rules.isValidEmail(i.email()), prefix + ".email", "Email invalide (exemple : nom@domaine.fr).");
+                check(!Rules.isValidEmail(i.getEmail()), prefix + ".email", "Email invalide (exemple : nom@domaine.fr).");
             }
         }
         return this;
     }
 
     public Validation address(final String prefix, final Address a) {
-        return check(a == null || isBlank(a.ligne()) || isBlank(a.codePostal()) || isBlank(a.commune()),
+        return check(a == null || isBlank(a.getLigne()) || isBlank(a.getCodePostal()) || isBlank(a.getCommune()),
                 prefix, "L'adresse de facturation est obligatoire.");
     }
 

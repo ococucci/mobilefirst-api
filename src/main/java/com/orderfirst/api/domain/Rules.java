@@ -1,11 +1,12 @@
 package com.orderfirst.api.domain;
 
-import com.orderfirst.api.domain.Model.FamilyId;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.OfferOption;
-import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.Score;
+import com.orderfirst.api.model.FamilyId;
+import com.orderfirst.api.model.Flow;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Line;
+import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.OfferOption;
+import com.orderfirst.api.model.Score;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -105,49 +106,49 @@ public final class Rules {
 
     /** Seuls le nom, le prénom et la date de naissance relancent le contrôle Préventel. */
     public static boolean identityChangeRequiresRescore(final Identity before, final Identity after) {
-        return !norm(before.nom()).equals(norm(after.nom()))
-                || !norm(before.prenom()).equals(norm(after.prenom()))
-                || !Objects.equals(before.dateNaissance(), after.dateNaissance());
+        return !norm(before.getNom()).equals(norm(after.getNom()))
+                || !norm(before.getPrenom()).equals(norm(after.getPrenom()))
+                || !Objects.equals(before.getDateNaissance(), after.getDateNaissance());
     }
 
     /** Open ML : selon l'éligibilité de l'offre (pas la Carte Prépayée) et jamais pour une ligne Card. */
     public static boolean isOpenMlAvailable(final Offer offer, final Line line) {
-        return offer != null && offer.openMl().eligible() && (line == null || !line.isCard());
+        return offer != null && offer.getOpenMl().isEligible() && (line == null || !line.isCard());
     }
 
     /** Montant mensuel de la remise Open ML de l'offre (5 € pour une offre d'entrée de gamme, 10 € sinon). */
     public static double openMlDiscount(final Offer offer) {
-        return offer.openMl().monthlyDiscount() == null ? 0 : offer.openMl().monthlyDiscount();
+        return offer.getOpenMl().getMonthlyDiscount() == null ? 0 : offer.getOpenMl().getMonthlyDiscount();
     }
 
     /** Options actives avec l'offre : les options incluses, plus celles choisies parmi celles proposées. */
     public static List<OfferOption> selectedOptions(final Offer offer, final List<String> optionIds) {
-        return offer.options().stream().filter(o -> o.included() || optionIds.contains(o.id())).toList();
+        return offer.getOptions().stream().filter(o -> o.isIncluded() || optionIds.contains(o.getId())).toList();
     }
 
     /** Mensualité hors remises temporaires : prix de l'offre, options payantes, remise Open ML. */
     public static double monthly(final Offer offer, final List<String> optionIds, final boolean openMl) {
-        final double opts = selectedOptions(offer, optionIds).stream().filter(o -> !o.included()).mapToDouble(OfferOption::price).sum();
-        return Math.max(0, round(offer.price() + opts - (openMl ? openMlDiscount(offer) : 0)));
+        final double opts = selectedOptions(offer, optionIds).stream().filter(o -> !o.isIncluded()).mapToDouble(OfferOption::getPrice).sum();
+        return Math.max(0, round(offer.getPrice() + opts - (openMl ? openMlDiscount(offer) : 0)));
     }
 
     /** Mensualité pendant la remise de l'offre (appliquée automatiquement) ; null si l'offre n'a pas de remise. */
     public static Double monthlyDuringPromo(final Offer offer, final double monthly) {
-        return offer.promo() == null ? null : Math.max(0, round(monthly - offer.promo().monthlyDiscount()));
+        return offer.getPromo() == null ? null : Math.max(0, round(monthly - offer.getPromo().getMonthlyDiscount()));
     }
 
     public static double simChangeFee(final String reasonId) {
-        return Model.SIM_REASONS.stream().anyMatch(r -> r.id().equals(reasonId) && r.fee()) ? Model.SIM_LOSS_FEE : 0;
+        return ReferenceData.simReasons().stream().anyMatch(r -> r.getId().equals(reasonId) && r.isFee()) ? ReferenceData.SIM_LOSS_FEE : 0;
     }
 
     /** Montant à régler en caisse pour une acquisition : puce Carte Prépayée et terminal éventuel. */
     public static double acquisitionCashDue(final Offer offer, final double terminalPrice) {
-        return round((offer != null && offer.family() == FamilyId.prepaye ? Model.CARD_SIM_PRICE : 0) + terminalPrice);
+        return round((offer != null && offer.getFamily() == FamilyId.prepaye ? ReferenceData.CARD_SIM_PRICE : 0) + terminalPrice);
     }
 
     /** Pas de contrat pour une modification d'options. */
-    public static boolean requiresContract(final Model.Flow flow) {
-        return flow != Model.Flow.options;
+    public static boolean requiresContract(final Flow flow) {
+        return flow != Flow.options;
     }
 
     public static double round(final double n) {

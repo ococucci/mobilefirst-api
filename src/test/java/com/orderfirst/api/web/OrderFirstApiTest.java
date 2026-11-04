@@ -1,6 +1,8 @@
 package com.orderfirst.api.web;
 
-import com.orderfirst.api.domain.Model;
+import com.orderfirst.api.model.OfferOption;
+import com.orderfirst.api.model.OpenMlApplied;
+import com.orderfirst.api.model.OrderValidated;
 import com.orderfirst.api.port.OrderEventPublisher;
 import com.orderfirst.api.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,8 +72,8 @@ class OrderFirstApiTest {
         PUBLISHED.clear();
     }
 
-    private static OrderService.OrderValidated published() {
-        return (OrderService.OrderValidated) PUBLISHED.getLast();
+    private static OrderValidated published() {
+        return (OrderValidated) PUBLISHED.getLast();
     }
 
     private ResultActions send(final String url, final String json) throws Exception {
@@ -173,13 +175,13 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.orderNumber").value(startsWith("CMD-")))
                 .andExpect(jsonPath("$.cashDue").value(149.0));
         // L'offre vendue est recopiée dans le message : bl-60 22,99 + Multi-SIM 3 − Open ML 10, puis −10 € pendant 6 mois.
-        final var offer = published().offer();
-        assertEquals("bl-60", offer.id());
-        assertEquals(List.of("multisim"), offer.options().stream().map(Model.OfferOption::id).toList());
-        assertEquals("promo-10e-6m", offer.promo().id());
-        assertEquals(new OrderService.OpenMlApplied("0690654321", 10), offer.openMl());
-        assertEquals(15.99, offer.monthlyPrice());
-        assertEquals(5.99, offer.monthlyPriceDuringPromo());
+        final var offer = published().getOffer();
+        assertEquals("bl-60", offer.getId());
+        assertEquals(List.of("multisim"), offer.getOptions().stream().map(OfferOption::getId).toList());
+        assertEquals("promo-10e-6m", offer.getPromo().getId());
+        assertEquals(new OpenMlApplied("0690654321", 10), offer.getOpenMl());
+        assertEquals(15.99, offer.getMonthlyPrice());
+        assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
         mvc.perform(get("/api/v1/numbers/available")).andExpect(jsonPath("$").value(not(hasItem("0690123481"))));
         send("/api/v1/hardware/iccid-checks", "{\"iccid\":\"8933010000000000019\"}").andExpect(jsonPath("$.result").value("inconnu"));
     }
@@ -211,11 +213,11 @@ class OrderFirstApiTest {
                  "cgvAccepted":true,"privacyAccepted":true}""";
         send("/api/v1/orders", unchanged).andExpect(status().isBadRequest());
         send("/api/v1/orders", unchanged.replace("\"europe\"", "\"multisim\"")).andExpect(status().isCreated());
-        final var change = published().optionsChange();
-        assertEquals(List.of("multisim"), change.added().stream().map(Model.OfferOption::id).toList());
-        assertTrue(change.removed().isEmpty());
-        assertEquals(3.0, change.monthlyDelta());
-        assertNull(published().offer());
+        final var change = published().getOptionsChange();
+        assertEquals(List.of("multisim"), change.getAdded().stream().map(OfferOption::getId).toList());
+        assertTrue(change.getRemoved().isEmpty());
+        assertEquals(3.0, change.getMonthlyDelta());
+        assertNull(published().getOffer());
     }
 
     @Test

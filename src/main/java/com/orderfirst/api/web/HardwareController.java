@@ -1,11 +1,11 @@
 package com.orderfirst.api.web;
 
-import com.orderfirst.api.domain.Model.Terminal;
+import com.orderfirst.api.model.AddressSuggestion;
+import com.orderfirst.api.model.Terminal;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.domain.Validation;
 import com.orderfirst.api.port.ImlPort;
 import com.orderfirst.api.port.OrasPort;
-import com.orderfirst.api.port.OrasPort.AddressSuggestion;
 import com.orderfirst.api.port.SiFinancierPort;
 import com.orderfirst.api.port.SiFinancierPort.IccidCheck;
 import io.swagger.v3.oas.annotations.Operation;

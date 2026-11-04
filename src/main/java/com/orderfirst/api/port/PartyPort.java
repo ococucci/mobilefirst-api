@@ -1,9 +1,9 @@
 package com.orderfirst.api.port;
 
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Customer;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Score;
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.Customer;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Score;
 
 import java.util.Optional;
 

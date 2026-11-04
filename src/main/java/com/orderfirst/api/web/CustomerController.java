@@ -1,9 +1,11 @@
 package com.orderfirst.api.web;
 
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Customer;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Score;
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.Customer;
+import com.orderfirst.api.model.CustomerCreation;
+import com.orderfirst.api.model.CustomerUpdate;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Score;
 import com.orderfirst.api.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,13 +61,13 @@ public class CustomerController {
     @Operation(summary = "Contrôle Préventel puis création du client (pas de création si le score est rouge)")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerService.Creation create(@RequestBody final CreateRequest request) {
+    public CustomerCreation create(@RequestBody final CreateRequest request) {
         return customers.create(request.identity(), request.address());
     }
 
     @Operation(summary = "Mise à jour à l'étape Client (relance Préventel si nom, prénom ou date de naissance changent)")
     @PutMapping("/{id}")
-    public CustomerService.Update update(@PathVariable final String id, @RequestBody final CreateRequest request) {
+    public CustomerUpdate update(@PathVariable final String id, @RequestBody final CreateRequest request) {
         return customers.update(id, request.identity(), request.address());
     }
 

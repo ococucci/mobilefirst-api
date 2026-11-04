@@ -1,6 +1,6 @@
 package com.orderfirst.api.port;
 
-import com.orderfirst.api.domain.Model.Promo;
+import com.orderfirst.api.model.Promo;
 
 import java.util.Optional;
 

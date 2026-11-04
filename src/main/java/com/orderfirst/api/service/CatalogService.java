@@ -1,6 +1,6 @@
 package com.orderfirst.api.service;
 
-import com.orderfirst.api.domain.Model.Offer;
+import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.PromoAdvicePort;
 import org.springframework.stereotype.Service;
@@ -24,11 +24,11 @@ public class CatalogService {
     }
 
     public Optional<Offer> offer(final String id) {
-        return catalogue.offers().stream().filter(o -> o.id().equals(id)).findFirst()
+        return catalogue.offers().stream().filter(o -> o.getId().equals(id)).findFirst()
                 .map(this::withPromo);
     }
 
     private Offer withPromo(final Offer offer) {
-        return offer.withPromo(promos.promoFor(offer.id()).orElse(null));
+        return offer.withPromo(promos.promoFor(offer.getId()).orElse(null));
     }
 }

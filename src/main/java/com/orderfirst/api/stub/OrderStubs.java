@@ -1,5 +1,6 @@
 package com.orderfirst.api.stub;
 
+import com.orderfirst.api.model.CreatedOrder;
 import com.orderfirst.api.port.ManagePaymentPort;
 import com.orderfirst.api.port.OrderEventPublisher;
 import com.orderfirst.api.port.OrderPort;
@@ -40,7 +41,8 @@ final class OrderStubs {
         @Override
         public CreatedOrder create(final String msisdn, final Map<String, Object> order) {
             pending.add(msisdn);
-            return new CreatedOrder("CMD-%d-%07d".formatted(Year.now().getValue(), sequence.getAndIncrement()), Instant.now());
+            // Le montant à régler en caisse est calculé et renseigné par OrderService.
+            return new CreatedOrder("CMD-%d-%07d".formatted(Year.now().getValue(), sequence.getAndIncrement()), Instant.now(), 0);
         }
     }
 

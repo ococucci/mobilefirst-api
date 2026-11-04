@@ -1,7 +1,7 @@
 package com.orderfirst.api.stub;
 
-import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.Promo;
+import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.Promo;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.PromoAdvicePort;

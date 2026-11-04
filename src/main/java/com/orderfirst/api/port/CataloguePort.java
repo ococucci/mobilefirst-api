@@ -1,6 +1,6 @@
 package com.orderfirst.api.port;
 
-import com.orderfirst.api.domain.Model.Offer;
+import com.orderfirst.api.model.Offer;
 
 import java.util.List;
 

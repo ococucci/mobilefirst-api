@@ -1,7 +1,8 @@
 package com.orderfirst.api.web;
 
+import com.orderfirst.api.model.CreatedOrder;
+import com.orderfirst.api.model.OrderRequest;
 import com.orderfirst.api.service.ContractService;
-import com.orderfirst.api.service.OrderRequest;
 import com.orderfirst.api.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,7 +55,7 @@ public class OrderController {
     @Operation(summary = "Valide et crée la commande ; elle est publiée dans le bus PubSub")
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderService.CreatedOrder create(@RequestBody final OrderRequest request) {
+    public CreatedOrder create(@RequestBody final OrderRequest request) {
         return orders.create(request);
     }
 

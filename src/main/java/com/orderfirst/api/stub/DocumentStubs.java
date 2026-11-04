@@ -1,5 +1,6 @@
 package com.orderfirst.api.stub;
 
+import com.orderfirst.api.model.AddressSuggestion;
 import com.orderfirst.api.port.DocumentPort;
 import com.orderfirst.api.port.EpcPort;
 import com.orderfirst.api.port.OrasPort;
@@ -87,7 +88,7 @@ final class DocumentStubs {
             }
             return StubData.ADDRESSES.stream()
                     .filter(a -> {
-                        final var text = (a.ligne() + " " + a.codePostal() + " " + a.commune()).toLowerCase(Locale.ROOT);
+                        final var text = (a.getLigne() + " " + a.getCodePostal() + " " + a.getCommune()).toLowerCase(Locale.ROOT);
                         return words.stream().allMatch(text::contains);
                     })
                     .limit(5)

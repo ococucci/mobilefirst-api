@@ -1,15 +1,16 @@
 package com.orderfirst.api.domain;
 
-import com.orderfirst.api.domain.Model.FamilyId;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Line;
-import com.orderfirst.api.domain.Model.OfferOption;
-import com.orderfirst.api.domain.Model.OpenMl;
-import com.orderfirst.api.domain.Model.Promo;
-import com.orderfirst.api.domain.Model.Offer;
-import com.orderfirst.api.domain.Model.PieceType;
-import com.orderfirst.api.domain.Model.Score;
-import com.orderfirst.api.domain.Model.SimType;
+import com.orderfirst.api.model.Flow;
+import com.orderfirst.api.model.Promo;
+import com.orderfirst.api.model.FamilyId;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Line;
+import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.OfferOption;
+import com.orderfirst.api.model.OpenMl;
+import com.orderfirst.api.model.PieceType;
+import com.orderfirst.api.model.Score;
+import com.orderfirst.api.model.SimType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -26,7 +27,7 @@ class RulesTest {
 
     private static Offer offer(final FamilyId family, final double price, final boolean entryLevel) {
         return new Offer("o", family, "Offre", "", price,
-                family == FamilyId.prepaye ? OpenMl.NONE : OpenMl.of(entryLevel ? 5 : 10),
+                family == FamilyId.prepaye ? OpenMl.none() : OpenMl.of(entryLevel ? 5 : 10),
                 List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), null);
     }
 
@@ -63,7 +64,7 @@ class RulesTest {
         assertEquals(17.99, Rules.monthly(offer, List.of("a"), true));
         assertEquals(0, Rules.monthly(offer(FamilyId.bloque, 5, true), List.of(), true));
         // L'option incluse est toujours active et gratuite ; une option non proposée est ignorée.
-        assertEquals(List.of("a", "inc"), Rules.selectedOptions(offer, List.of("a", "x")).stream().map(OfferOption::id).toList());
+        assertEquals(List.of("a", "inc"), Rules.selectedOptions(offer, List.of("a", "x")).stream().map(OfferOption::getId).toList());
         assertEquals(22.99, Rules.monthly(offer, List.of("inc"), false));
     }
 
@@ -82,8 +83,8 @@ class RulesTest {
         assertEquals(0, Rules.simChangeFee("mobile"));
         assertEquals(10, Rules.acquisitionCashDue(offer(FamilyId.prepaye, 0, true), 0));
         assertEquals(149, Rules.acquisitionCashDue(offer(FamilyId.bloque, 20, false), 149));
-        assertFalse(Rules.requiresContract(Model.Flow.options));
-        assertTrue(Rules.requiresContract(Model.Flow.sim));
+        assertFalse(Rules.requiresContract(Flow.options));
+        assertTrue(Rules.requiresContract(Flow.sim));
     }
 
     @Test

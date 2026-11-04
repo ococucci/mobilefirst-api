@@ -1,10 +1,10 @@
 package com.orderfirst.api.stub;
 
-import com.orderfirst.api.domain.Model.Address;
-import com.orderfirst.api.domain.Model.Customer;
-import com.orderfirst.api.domain.Model.CustomerType;
-import com.orderfirst.api.domain.Model.Identity;
-import com.orderfirst.api.domain.Model.Score;
+import com.orderfirst.api.model.Address;
+import com.orderfirst.api.model.Customer;
+import com.orderfirst.api.model.CustomerType;
+import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Score;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.PartyPort;
 
@@ -20,13 +20,13 @@ class PartyStub implements PartyPort {
     private final Map<String, Customer> customers = new ConcurrentHashMap<>();
 
     PartyStub() {
-        StubData.customers().forEach(c -> customers.put(c.id(), c));
+        StubData.customers().forEach(c -> customers.put(c.getId(), c));
     }
 
     @Override
     public Optional<Customer> findByMsisdn(final String msisdn) {
         final var n = Rules.digits(msisdn);
-        return customers.values().stream().filter(c -> c.lines().stream().anyMatch(l -> l.msisdn().equals(n))).findFirst();
+        return customers.values().stream().filter(c -> c.getLines().stream().anyMatch(l -> l.getMsisdn().equals(n))).findFirst();
     }
 
     @Override
@@ -37,10 +37,10 @@ class PartyStub implements PartyPort {
     @Override
     public Optional<Customer> findExisting(final Identity identity) {
         return customers.values().stream()
-                .filter(c -> norm(c.identity().nom()).equals(norm(identity.nom()))
-                        && norm(c.identity().prenom()).equals(norm(identity.prenom()))
-                        && c.identity().dateNaissance().equals(identity.dateNaissance())
-                        && Rules.compact(c.identity().pieceNumero()).equals(Rules.compact(identity.pieceNumero())))
+                .filter(c -> norm(c.getIdentity().getNom()).equals(norm(identity.getNom()))
+                        && norm(c.getIdentity().getPrenom()).equals(norm(identity.getPrenom()))
+                        && c.getIdentity().getDateNaissance().equals(identity.getDateNaissance())
+                        && Rules.compact(c.getIdentity().getPieceNumero()).equals(Rules.compact(identity.getPieceNumero())))
                 .findFirst();
     }
 
@@ -54,7 +54,12 @@ class PartyStub implements PartyPort {
 
     @Override
     public Customer update(final String id, final Identity identity, final Address address, final Score score) {
-        final var updated = customers.computeIfPresent(id, (k, c) -> c.withData(identity, address, score));
+        final var updated = customers.computeIfPresent(id, (k, c) -> {
+            c.setIdentity(identity);
+            c.setAddress(address);
+            c.setScore(score);
+            return c;
+        });
         if (updated == null) {
             throw new NoSuchElementException("Client " + id + " introuvable");
         }

@@ -113,7 +113,9 @@ saisie (`order`), le message recopie ce qui a été vendu, avec libellés et pri
 
 ```
 src/main/java/com/orderfirst/api/
-  domain/    modèle, règles de gestion et messages de validation (alignés sur le front)
+  model/     objets métier, une classe par type (getters, setters, equals, hashCode, toString) :
+             client, ligne, offre, option, remise, commande, message publié…
+  domain/    règles de gestion, messages de validation (alignés sur le front), listes de référence
   port/      une interface par API du SI (Party, api-scoring, Castor, api-order, PubSub…)
   stub/      implémentations bouchonnées de ces interfaces (orderfirst.integrations=stub)
   service/   identification du client, contrat et commande (contrôles et orchestration)

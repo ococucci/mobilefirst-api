@@ -1,6 +1,6 @@
 package com.orderfirst.api.port;
 
-import com.orderfirst.api.domain.Model.Terminal;
+import com.orderfirst.api.model.Terminal;
 
 import java.util.List;
 
