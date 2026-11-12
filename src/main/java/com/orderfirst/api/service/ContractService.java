@@ -92,6 +92,11 @@ public class ContractService {
                 lines.add("Les " + c.offer().getPromo().getDurationMonths() + " premiers mois : " + euro(duringPromo) + "/mois");
             }
         }
+        if (c.terminal() != null) {
+            final var t = c.terminal();
+            lines.add("Terminal : " + t.getBrand() + " " + t.getModel() + " " + t.getColor().getLabel() + " - " + euro(t.getPrice())
+                    + " (tarif " + t.getLevel() + ") - IMEI " + t.getImei());
+        }
         if (r.getSim() != null) {
             lines.add("SIM : " + (r.getSim().getType() == SimType.esim ? "eSIM" : "SIM physique") + " - ICCID " + Rules.compact(r.getSim().getIccid()));
         }

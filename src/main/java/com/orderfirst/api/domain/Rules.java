@@ -7,6 +7,7 @@ import com.orderfirst.api.model.Line;
 import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.model.OfferOption;
 import com.orderfirst.api.model.Score;
+import com.orderfirst.api.model.Terminal;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -124,6 +125,28 @@ public final class Rules {
     /** Options actives avec l'offre : les options incluses, plus celles choisies parmi celles proposées. */
     public static List<OfferOption> selectedOptions(final Offer offer, final List<String> optionIds) {
         return offer.getOptions().stream().filter(o -> o.isIncluded() || optionIds.contains(o.getId())).toList();
+    }
+
+    /** Première paire d'options actives incompatibles entre elles (options incluses comprises), ou null. */
+    public static List<OfferOption> incompatiblePair(final Offer offer, final List<String> optionIds) {
+        final var active = selectedOptions(offer, optionIds);
+        for (int i = 0; i < active.size(); i++) {
+            for (int j = i + 1; j < active.size(); j++) {
+                if (active.get(i).isIncompatibleWith(active.get(j))) {
+                    return List.of(active.get(i), active.get(j));
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Prix du terminal au niveau de l'offre choisie (niveau de subvention). */
+    public static double terminalPrice(final Terminal terminal, final Offer offer) {
+        final var price = terminal.getPrices() == null ? null : terminal.getPrices().get(offer.getLevel());
+        if (price == null) {
+            throw new IllegalStateException("Pas de prix " + offer.getLevel() + " pour le terminal " + terminal.getId());
+        }
+        return price;
     }
 
     /** Mensualité hors remises temporaires : prix de l'offre, options payantes, remise Open ML. */

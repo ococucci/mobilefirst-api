@@ -1,5 +1,6 @@
 package com.orderfirst.api.web;
 
+import com.orderfirst.api.model.OfferLevel;
 import com.orderfirst.api.model.OfferOption;
 import com.orderfirst.api.model.OpenMlApplied;
 import com.orderfirst.api.model.OrderValidated;
@@ -27,6 +28,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -161,7 +163,7 @@ class OrderFirstApiTest {
                 {"flow":"acquisition","customerId":"CL-000101","holder":%s,"billingAddress":%s,
                  "number":{"mode":"nouveau","msisdn":"0690123481"},"offerId":"bl-60","options":["multisim"],
                  "openMlSponsor":"0690 65 43 21","sim":{"type":"physique","iccid":"8933 0100 0000 0000 019"},
-                 "terminal":{"id":"tel-a15","imei":"490154203237518"},"sepaMandateRef":"%s"}"""
+                 "terminal":{"id":"sam-a15","colorId":"sam-a15-noir","imei":"490154203237518"},"sepaMandateRef":"%s"}"""
                 .formatted(MARIE, ADDRESS, mandate());
         final var contractRef = contract(order);
         mvc.perform(get("/api/v1/contracts/" + contractRef))
@@ -173,7 +175,7 @@ class OrderFirstApiTest {
         send("/api/v1/orders", confirmed(order, contractRef))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderNumber").value(startsWith("CMD-")))
-                .andExpect(jsonPath("$.cashDue").value(149.0));
+                .andExpect(jsonPath("$.cashDue").value(99.0)); // Galaxy A15 au tarif silver de bl-60
         // L'offre vendue est recopiée dans le message : bl-60 22,99 + Multi-SIM 3 − Open ML 10, puis −10 € pendant 6 mois.
         final var offer = published().getOffer();
         assertEquals("bl-60", offer.getId());
@@ -182,6 +184,11 @@ class OrderFirstApiTest {
         assertEquals(new OpenMlApplied("0690654321", 10), offer.getOpenMl());
         assertEquals(15.99, offer.getMonthlyPrice());
         assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
+        final var terminal = published().getTerminal();
+        assertEquals("Galaxy A15 128Go", terminal.getModel());
+        assertEquals("noir", terminal.getColor().getLabel());
+        assertEquals(OfferLevel.silver, terminal.getLevel());
+        assertEquals(99.0, terminal.getPrice());
         mvc.perform(get("/api/v1/numbers/available")).andExpect(jsonPath("$").value(not(hasItem("0690123481"))));
         send("/api/v1/hardware/iccid-checks", "{\"iccid\":\"8933010000000000019\"}").andExpect(jsonPath("$.result").value("inconnu"));
     }
@@ -193,8 +200,51 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$[?(@.id == 'bl-20')].promo").value(hasItem(nullValue())))
                 .andExpect(jsonPath("$[?(@.id == 'bl-120')].options[?(@.id == 'europe')].included").value(hasItem(true)))
                 .andExpect(jsonPath("$[?(@.id == 'nb-200')].options[?(@.id == 'international')].price").value(hasItem(8.0)))
-                .andExpect(jsonPath("$[?(@.id == 'pp-classique')].openMl.eligible").value(hasItem(false)));
+                .andExpect(jsonPath("$[?(@.id == 'pp-classique')].openMl.eligible").value(hasItem(false)))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].level").value(hasItem("silver")))
+                .andExpect(jsonPath("$[?(@.id == 'pp-classique')].level").value(hasItem("card")))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].options[?(@.id == 'europe-plus')].incompatibleOptions[0]").value(hasItem("europe")))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].options[?(@.id == 'europe')].incompatibleOptions").value(hasItem(empty())));
         mvc.perform(get("/api/v1/catalog/options")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void terminalsCarryPricesByLevelAndColors() throws Exception {
+        mvc.perform(get("/api/v1/hardware/terminals"))
+                .andExpect(jsonPath("$[?(@.id == 'ip16-128')].brand").value(hasItem("APPLE")))
+                .andExpect(jsonPath("$[?(@.id == 'ip16-128')].model").value(hasItem("iPhone 16 5G 128Go")))
+                .andExpect(jsonPath("$[?(@.id == 'ip16-128')].prices.silver").value(hasItem(829.0)))
+                .andExpect(jsonPath("$[?(@.id == 'ip16-128')].prices.platine").value(hasItem(549.0)))
+                .andExpect(jsonPath("$[?(@.id == 'ip16-128')].colors[*].id").value(hasItem("ip16-128-bleu")))
+                .andExpect(jsonPath("$[0].colors[0].stock").doesNotExist());
+    }
+
+    @Test
+    void terminalColorMustBelongToTheModel() throws Exception {
+        send("/api/v1/contracts", """
+                {"flow":"acquisition","customerId":"CL-000101","offerId":"bl-60",
+                 "terminal":{"id":"sam-a15","colorId":"ip16-128-bleu","imei":"490154203237518"}}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(hasItem("terminal.colorId")))
+                .andExpect(jsonPath("$.errors[*].field").value(not(hasItem("terminal.id"))));
+        send("/api/v1/contracts", """
+                {"flow":"acquisition","customerId":"CL-000101","offerId":"bl-60","terminal":{"id":"inconnu","imei":"490154203237518"}}""")
+                .andExpect(jsonPath("$.errors[*].field").value(hasItem("terminal.id")));
+    }
+
+    @Test
+    void incompatibleOptionsAreRefused() throws Exception {
+        // Europe 25 Go déclare l'incompatibilité avec Europe 10 Go : elle vaut aussi dans l'autre sens.
+        send("/api/v1/contracts", """
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-60","options":["europe","europe-plus"]}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("options"))
+                .andExpect(jsonPath("$.errors[0].message").value("Options incompatibles : Option Europe 10 Go et Option Europe 25 Go."));
+        // Europe est incluse dans bl-120 : Europe 25 Go ne peut pas être ajoutée.
+        send("/api/v1/contracts", """
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","options":["europe-plus"]}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message").value("Options incompatibles : Option Europe 10 Go et Option Europe 25 Go."));
     }
 
     @Test

@@ -6,11 +6,14 @@ import java.util.Optional;
 
 /**
  * Offre du catalogue avec ce qui en dépend : éligibilité Open ML, options proposées (prix propres à
- * l'offre, éventuellement incluses) et remise appliquée automatiquement (une seule par offre).
+ * l'offre, éventuellement incluses) et remise appliquée automatiquement (une seule par offre). Le niveau de
+ * l'offre fixe le tarif des terminaux vendus avec elle.
  */
 public class Offer {
     private String id;
     private FamilyId family;
+    /** Niveau de l'offre : le terminal est vendu au tarif de ce niveau. */
+    private OfferLevel level;
     private String label;
     private String detail;
     /** Prix mensuel en euros (0 pour la Carte Prépayée). */
@@ -23,9 +26,10 @@ public class Offer {
     public Offer() {
     }
 
-    public Offer(final String id, final FamilyId family, final String label, final String detail, final double price, final OpenMl openMl, final List<OfferOption> options, final Promo promo) {
+    public Offer(final String id, final FamilyId family, final OfferLevel level, final String label, final String detail, final double price, final OpenMl openMl, final List<OfferOption> options, final Promo promo) {
         this.id = id;
         this.family = family;
+        this.level = level;
         this.label = label;
         this.detail = detail;
         this.price = price;
@@ -48,6 +52,14 @@ public class Offer {
 
     public void setFamily(final FamilyId family) {
         this.family = family;
+    }
+
+    public OfferLevel getLevel() {
+        return level;
+    }
+
+    public void setLevel(final OfferLevel level) {
+        this.level = level;
     }
 
     public String getLabel() {
@@ -105,22 +117,22 @@ public class Offer {
 
     /** Copie de l'offre avec la remise donnée. */
     public Offer withPromo(final Promo promo) {
-        return new Offer(id, family, label, detail, price, openMl, options, promo);
+        return new Offer(id, family, level, label, detail, price, openMl, options, promo);
     }
 
     @Override
     public boolean equals(final Object o) {
         return this == o || o instanceof final Offer that
-                && Objects.equals(id, that.id) && Objects.equals(family, that.family) && Objects.equals(label, that.label) && Objects.equals(detail, that.detail) && Double.compare(price, that.price) == 0 && Objects.equals(openMl, that.openMl) && Objects.equals(options, that.options) && Objects.equals(promo, that.promo);
+                && Objects.equals(id, that.id) && Objects.equals(family, that.family) && level == that.level && Objects.equals(label, that.label) && Objects.equals(detail, that.detail) && Double.compare(price, that.price) == 0 && Objects.equals(openMl, that.openMl) && Objects.equals(options, that.options) && Objects.equals(promo, that.promo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, family, label, detail, price, openMl, options, promo);
+        return Objects.hash(id, family, level, label, detail, price, openMl, options, promo);
     }
 
     @Override
     public String toString() {
-        return "Offer[" + "id=" + id + ", " + "family=" + family + ", " + "label=" + label + ", " + "detail=" + detail + ", " + "price=" + price + ", " + "openMl=" + openMl + ", " + "options=" + options + ", " + "promo=" + promo + "]";
+        return "Offer[" + "id=" + id + ", " + "family=" + family + ", " + "level=" + level + ", " + "label=" + label + ", " + "detail=" + detail + ", " + "price=" + price + ", " + "openMl=" + openMl + ", " + "options=" + options + ", " + "promo=" + promo + "]";
     }
 }

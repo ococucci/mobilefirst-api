@@ -16,7 +16,7 @@ import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.model.OrderRequest;
 import com.orderfirst.api.model.OrderValidated;
 import com.orderfirst.api.model.Score;
-import com.orderfirst.api.model.Terminal;
+import com.orderfirst.api.model.TerminalSnapshot;
 import com.orderfirst.api.domain.ReferenceData;
 import com.orderfirst.api.domain.ApiException;
 import com.orderfirst.api.domain.Rules;
@@ -102,7 +102,7 @@ public class OrderService {
         }
         cashDueByOrder.put(created.getOrderNumber(), checked.cashDue());
         bus.publish(new OrderValidated(OrderEventPublisher.TOPIC, created.getOrderNumber(), created.getCreatedAt(), request.getFlow(),
-                request.getCustomerId(), checked.msisdn(), checked.cashDue(), offer, optionsChange, request));
+                request.getCustomerId(), checked.msisdn(), checked.cashDue(), offer, optionsChange, checked.terminal(), request));
         return new CreatedOrder(created.getOrderNumber(), created.getCreatedAt(), checked.cashDue());
     }
 
@@ -120,8 +120,11 @@ public class OrderService {
         return payments.recordCashPayment(orderNumber, amount);
     }
 
-    /** Résultat des contrôles : numéro de la ligne concernée et montant à régler en caisse. */
-    public record Checked(String msisdn, double cashDue, Customer customer, Offer offer, Line line) {
+    /**
+     * Résultat des contrôles : numéro de la ligne concernée, montant à régler en caisse et, pour une acquisition
+     * avec terminal, le terminal vendu au prix du niveau de l'offre.
+     */
+    public record Checked(String msisdn, double cashDue, Customer customer, Offer offer, Line line, TerminalSnapshot terminal) {
     }
 
     public Checked validate(final OrderRequest r) {
@@ -167,24 +170,14 @@ public class OrderService {
         checkOptions(r, offer, v);
         openMl(r, offer, null, v);
         checkSim(r, v);
-        double terminalPrice = 0;
         final var isCard = offer != null && offer.getFamily() == FamilyId.prepaye;
-        if (r.getTerminal() != null && !isCard) {
-            final var terminal = siFinancier.terminals().stream().filter(t -> t.getId().equals(r.getTerminal().getId())).findFirst();
-            v.check(terminal.isEmpty(), "terminal.id", "Choisissez un terminal.");
-            if (isBlank(r.getTerminal().getImei())) {
-                v.check(true, "terminal.imei", "L'IMEI est obligatoire.");
-            } else {
-                v.check(!Rules.isValidImei(r.getTerminal().getImei()), "terminal.imei", "IMEI invalide : 15 chiffres.");
-            }
-            terminalPrice = terminal.map(Terminal::getPrice).orElse(0.);
-        }
+        final var terminal = isCard ? null : terminal(r, offer, v);
         if (!isCard) {
             v.check(!iml.exists(r.getSepaMandateRef()), "sepaMandateRef", "Le mandat SEPA doit être enregistré (POST /sepa-mandates).");
         }
         final var msisdn = r.getNumber() == null ? "" : Rules.digits(
                 r.getNumber().getMode() == NumberMode.portabilite ? r.getNumber().getPortedMsisdn() : r.getNumber().getMsisdn());
-        return new Checked(msisdn, Rules.acquisitionCashDue(offer, terminalPrice), customer, offer, null);
+        return new Checked(msisdn, Rules.acquisitionCashDue(offer, terminal == null ? 0 : terminal.getPrice()), customer, offer, null, terminal);
     }
 
     private Checked forfait(final OrderRequest r, final Customer customer, final Validation v) {
@@ -200,7 +193,7 @@ public class OrderService {
         v.check(offer != null && line != null && offer.getId().equals(line.getOfferId()), "offerId", "Choisissez une offre différente de l'offre actuelle.");
         checkOptions(r, offer, v);
         openMl(r, offer, line, v);
-        return new Checked(line == null ? "" : line.getMsisdn(), 0, customer, offer, line);
+        return new Checked(line == null ? "" : line.getMsisdn(), 0, customer, offer, line, null);
     }
 
     private Checked options(final OrderRequest r, final Customer customer, final Validation v) {
@@ -212,7 +205,7 @@ public class OrderService {
             v.check(Objects.equals(paidOptions(offer, line.getOptions()), paidOptions(offer, r.getOptionsOrEmpty())), "options",
                     "Ajoutez ou retirez au moins une option.");
         }
-        return new Checked(line == null ? "" : line.getMsisdn(), 0, customer, offer, line);
+        return new Checked(line == null ? "" : line.getMsisdn(), 0, customer, offer, line, null);
     }
 
     /** Options payantes choisies : une option incluse ne compte pas comme un ajout ou un retrait. */
@@ -226,7 +219,7 @@ public class OrderService {
         v.check(ReferenceData.simReasons().stream().noneMatch(reason -> reason.getId().equals(r.getSimReason())), "simReason",
                 "Choisissez la raison du changement.");
         checkSim(r, v);
-        return new Checked(line == null ? "" : line.getMsisdn(), Rules.simChangeFee(r.getSimReason()), customer, null, line);
+        return new Checked(line == null ? "" : line.getMsisdn(), Rules.simChangeFee(r.getSimReason()), customer, null, line, null);
     }
 
     // ----- Contrôles communs
@@ -293,6 +286,33 @@ public class OrderService {
         v.check(offer.getOptions().isEmpty() && !r.getOptionsOrEmpty().isEmpty(), "options", "Aucune option n'est proposée avec cette offre.");
         v.check(r.getOptionsOrEmpty().stream().anyMatch(o -> o == null || offer.option(o).isEmpty()), "options",
                 "Option non proposée avec cette offre.");
+        if (!v.has("options")) {
+            final var pair = Rules.incompatiblePair(offer, r.getOptionsOrEmpty());
+            v.check(pair != null, "options", pair == null ? "" : "Options incompatibles : " + pair.get(0).getLabel() + " et " + pair.get(1).getLabel() + ".");
+        }
+    }
+
+    /** Terminal choisi (modèle, couleur, IMEI), au prix du niveau de l'offre ; null sans terminal ou s'il est invalide. */
+    private TerminalSnapshot terminal(final OrderRequest r, final Offer offer, final Validation v) {
+        final var choice = r.getTerminal();
+        if (choice == null) {
+            return null;
+        }
+        final var terminal = isBlank(choice.getId()) ? null
+                : siFinancier.terminals().stream().filter(t -> t.getId().equals(choice.getId())).findFirst().orElse(null);
+        v.check(terminal == null, "terminal.id", "Choisissez un modèle de terminal.");
+        final var color = terminal == null ? null : terminal.color(choice.getColorId()).orElse(null);
+        v.check(terminal != null && color == null, "terminal.colorId", "Choisissez une couleur proposée pour ce modèle.");
+        if (isBlank(choice.getImei())) {
+            v.check(true, "terminal.imei", "L'IMEI est obligatoire.");
+        } else {
+            v.check(!Rules.isValidImei(choice.getImei()), "terminal.imei", "IMEI invalide : 15 chiffres.");
+        }
+        if (terminal == null || color == null || offer == null) {
+            return null;
+        }
+        return new TerminalSnapshot(terminal.getId(), terminal.getBrand(), terminal.getModel(), color, offer.getLevel(),
+                Rules.terminalPrice(terminal, offer), Rules.compact(choice.getImei()));
     }
 
     private void openMl(final OrderRequest r, final Offer offer, final Line line, final Validation v) {
@@ -358,6 +378,9 @@ public class OrderService {
         }
         if (optionsChange != null) {
             payload.put("optionsChange", optionsChange);
+        }
+        if (c.terminal() != null) {
+            payload.put("terminal", c.terminal());
         }
         payload.put("request", r);
         return payload;

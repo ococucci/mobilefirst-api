@@ -42,11 +42,11 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `PUT /customers/{id}` | Étape Client : mise à jour, Préventel relancé si nom, prénom ou date de naissance changent | api-scoring, Party |
 | `GET /customers/{id}/pending-lines` | Lignes avec une commande en cours | api-order |
 | `POST /customers/{id}/lines/{msisdn}/rescoring` | Re-scoring d'une ligne Card avant changement de forfait | api-scoring |
-| `GET /catalog/offers` | Forfaits, avec pour chacun ses options, sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
+| `GET /catalog/offers` | Forfaits, avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
 | `GET /catalog/sim-reasons`, `GET /catalog/donor-operators` | Listes de référence | — |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
 | `POST /open-ml/sponsor-checks` | Validation du N° sponsor Open ML | api RHOC |
-| `GET /hardware/terminals` | Terminaux | Enabler si-financier |
+| `GET /hardware/terminals` | Modèles de terminaux : marque, modèle, prix par niveau d'offre, couleurs | Enabler si-financier |
 | `POST /hardware/iccid-checks` | Contrôle de l'ICCID (`ok`, `format`, `inconnu`) | Enabler si-financier |
 | `POST /hardware/sim-scans` | Lecture simulée du code-barres d'une SIM | Enabler si-financier |
 | `POST /sepa-mandates` | Contrôle et stockage du mandat SEPA (signé hors outil) | api IML |
@@ -62,7 +62,7 @@ Le même corps sert à générer le contrat puis à valider la commande. Les cha
 
 | `flow` | Champs |
 | --- | --- |
-| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `sim` (`type`, `iccid`), `terminal` (`id`, `imei`), `sepaMandateRef` |
+| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `sepaMandateRef` |
 | `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor` |
 | `options` | `lineMsisdn`, `options` (liste complète souhaitée : le serveur calcule ajouts et retraits) |
 | `sim` | `lineMsisdn`, `simReason`, `sim` |
@@ -71,7 +71,7 @@ Pour valider : `contractRef` (renvoyé par `POST /contracts`) et `contractSigned
 `cgvAccepted: true` et `privacyAccepted: true`.
 
 Toutes les règles de gestion sont revérifiées côté serveur (le front n'est pas une source de confiance) et le
-montant à régler en caisse est recalculé : puce Carte Prépayée à 10 €, terminal, frais de 10 € pour une SIM
+montant à régler en caisse est recalculé : puce Carte Prépayée à 10 €, terminal au prix du niveau de l'offre, frais de 10 € pour une SIM
 perdue ou volée. À la validation, la SIM sort du stock, le numéro choisi est réservé, la ligne passe en
 « commande en cours » et le message `orange-order-first.mobile.order-validated` est publié.
 
@@ -79,15 +79,32 @@ perdue ou volée. À la validation, la SIM sort du stock, le numéro choisi est 
 
 Chaque offre de `GET /catalog/offers` porte ce qui dépend d'elle :
 
+- `level` : niveau de l'offre (`nonsub`, `card`, `silver`, `gold`, `elite`, `platine`), qui fixe le tarif
+  (niveau de subvention) du terminal vendu avec elle ;
 - `openMl` : éligibilité et montant de la remise Open ML (`monthlyDiscount` : 5 € pour une offre d'entrée de
   gamme, 10 € sinon ; non éligible pour la Carte Prépayée) ;
 - `options` : options proposées avec cette offre, à un prix propre à l'offre ; une option `included` est gratuite
-  et toujours active ;
+  et toujours active ; `incompatibleOptions` liste les identifiants des options qui ne peuvent pas être actives en
+  même temps qu'elle (l'incompatibilité vaut dans les deux sens, même déclarée d'un seul côté) ;
 - `promo` : remise api-promo advice, appliquée automatiquement (`monthlyDiscount`, `durationMonths`) ; une seule
   par offre (les remises ne se cumulent pas), `null` si l'offre n'en a pas.
 
 Une commande ne peut porter que des options proposées avec l'offre choisie (ou, pour une modification d'options,
-avec l'offre actuelle de la ligne).
+avec l'offre actuelle de la ligne), sans deux options incompatibles, une option incluse comprise
+(erreur « Options incompatibles : … et … » sur le champ `options`).
+
+### Terminaux
+
+`GET /hardware/terminals` renvoie un modèle par entrée, avec son prix pour chaque niveau d'offre et ses couleurs :
+
+```json
+{ "id": "ip16-128", "brand": "APPLE", "model": "iPhone 16 5G 128Go",
+  "prices": { "nonsub": 969.0, "card": 969.0, "silver": 829.0, "gold": 689.0, "elite": 619.0, "platine": 549.0 },
+  "colors": [ { "id": "ip16-128-bleu", "label": "bleu" } ] }
+```
+
+La commande désigne le modèle et la couleur (`"terminal": { "id": "ip16-128", "colorId": "ip16-128-bleu", "imei": "…" }`) ;
+la couleur doit être proposée pour ce modèle. Le serveur applique le prix du niveau de l'offre choisie.
 
 ### Message publié à la validation
 
@@ -96,7 +113,8 @@ saisie (`order`), le message recopie ce qui a été vendu, avec libellés et pri
 
 - acquisition et changement de forfait : `offer` (offre, options actives dont les incluses, remise, Open ML
   appliqué, `monthlyPrice` et `monthlyPriceDuringPromo`, mensualité pendant la durée de la remise) ;
-- modification d'options : `optionsChange` (options ajoutées et retirées, `monthlyDelta`).
+- modification d'options : `optionsChange` (options ajoutées et retirées, `monthlyDelta`) ;
+- acquisition avec terminal : `terminal` (modèle, couleur, `level` de l'offre, `price` appliqué, `imei`).
 
 ```json
 "offer": {

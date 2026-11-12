@@ -6,19 +6,24 @@ import com.orderfirst.api.model.FamilyId;
 import com.orderfirst.api.model.Identity;
 import com.orderfirst.api.model.Line;
 import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.OfferLevel;
 import com.orderfirst.api.model.OfferOption;
 import com.orderfirst.api.model.OpenMl;
 import com.orderfirst.api.model.PieceType;
 import com.orderfirst.api.model.Score;
 import com.orderfirst.api.model.SimType;
+import com.orderfirst.api.model.Terminal;
+import com.orderfirst.api.model.TerminalColor;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RulesTest {
@@ -26,13 +31,37 @@ class RulesTest {
             PieceType.CNI, "12AB34567", "0690123456", "a@b.fr");
 
     private static Offer offer(final FamilyId family, final double price, final boolean entryLevel) {
-        return new Offer("o", family, "Offre", "", price,
+        return new Offer("o", family, OfferLevel.silver, "Offre", "", price,
                 family == FamilyId.prepaye ? OpenMl.none() : OpenMl.of(entryLevel ? 5 : 10),
                 List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), null);
     }
 
     private static Line line(final boolean card) {
         return new Line("0690123456", "o", "Offre", card ? null : 10., card, SimType.physique, List.of());
+    }
+
+    @Test
+    void incompatibleOptionsExcludeEachOtherBothWays() {
+        // c est incompatible avec a (déclaré sur c seulement) ; d est incompatible avec l'option incluse.
+        final var offer = new Offer("o", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of(10), List.of(
+                new OfferOption("a", "A", 5, false), new OfferOption("b", "B", 3, false),
+                new OfferOption("c", "C", 9, false, List.of("a")), new OfferOption("d", "D", 2, false),
+                new OfferOption("inc", "Incluse", 0, true, List.of("d"))), null);
+        assertNull(Rules.incompatiblePair(offer, List.of("a", "b")));
+        assertEquals(List.of("a", "c"), Rules.incompatiblePair(offer, List.of("c", "a")).stream().map(OfferOption::getId).toList());
+        assertEquals(List.of("d", "inc"), Rules.incompatiblePair(offer, List.of("d")).stream().map(OfferOption::getId).toList());
+    }
+
+    @Test
+    void terminalPriceDependsOnOfferLevel() {
+        final var terminal = new Terminal("ip16", "APPLE", "iPhone 16", Map.of(OfferLevel.nonsub, 969., OfferLevel.silver, 829., OfferLevel.platine, 549.),
+                List.of(new TerminalColor("ip16-bleu", "bleu")));
+        final var offer = offer(FamilyId.bloque, 20, false);
+        assertEquals(829, Rules.terminalPrice(terminal, offer));
+        offer.setLevel(OfferLevel.platine);
+        assertEquals(549, Rules.terminalPrice(terminal, offer));
+        offer.setLevel(OfferLevel.gold);
+        assertThrows(IllegalStateException.class, () -> Rules.terminalPrice(terminal, offer));
     }
 
     @Test
