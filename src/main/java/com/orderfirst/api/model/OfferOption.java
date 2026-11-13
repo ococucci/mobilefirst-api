@@ -13,8 +13,8 @@ public class OfferOption {
     private double price;
     private boolean included;
     /**
-     * Identifiants des options incompatibles avec celle-ci : tant qu'elle est active, ces options ne peuvent pas
-     * l'être. L'incompatibilité est à sens unique : seule la liste de l'option active compte.
+     * Identifiants des options incompatibles avec celle-ci. L'incompatibilité vaut dans les deux sens, même si elle
+     * n'est déclarée que sur l'une des deux options.
      */
     private List<String> incompatibleOptions = List.of();
 
@@ -73,9 +73,9 @@ public class OfferOption {
         this.incompatibleOptions = incompatibleOptions == null ? List.of() : incompatibleOptions;
     }
 
-    /** Cette option exclut l'autre si l'identifiant de l'autre figure dans sa liste d'incompatibilités. */
-    public boolean excludes(final OfferOption other) {
-        return !id.equals(other.id) && incompatibleOptions.contains(other.id);
+    /** Les deux options s'excluent : l'incompatibilité déclarée sur l'une vaut pour l'autre. */
+    public boolean isIncompatibleWith(final OfferOption other) {
+        return !id.equals(other.id) && (incompatibleOptions.contains(other.id) || other.incompatibleOptions.contains(id));
     }
 
     @Override

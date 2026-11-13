@@ -288,7 +288,7 @@ public class OrderService {
                 "Option non proposée avec cette offre.");
         if (!v.has("options")) {
             final var pair = Rules.incompatiblePair(offer, r.getOptionsOrEmpty());
-            v.check(pair != null, "options", pair == null ? "" : pair.get(0).getLabel() + " est incompatible avec " + pair.get(1).getLabel() + ".");
+            v.check(pair != null, "options", pair == null ? "" : "Options incompatibles : " + pair.get(0).getLabel() + " et " + pair.get(1).getLabel() + ".");
         }
     }
 

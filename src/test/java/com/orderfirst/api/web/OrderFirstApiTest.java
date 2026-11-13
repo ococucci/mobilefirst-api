@@ -234,21 +234,17 @@ class OrderFirstApiTest {
 
     @Test
     void incompatibleOptionsAreRefused() throws Exception {
-        // Europe 25 Go liste Europe 10 Go dans ses incompatibilités.
+        // Europe 25 Go déclare l'incompatibilité avec Europe 10 Go : elle vaut aussi dans l'autre sens.
         send("/api/v1/contracts", """
                 {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-60","options":["europe","europe-plus"]}""")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("options"))
-                .andExpect(jsonPath("$.errors[0].message").value("Option Europe 25 Go est incompatible avec Option Europe 10 Go."));
+                .andExpect(jsonPath("$.errors[0].message").value("Options incompatibles : Option Europe 10 Go et Option Europe 25 Go."));
         // Europe est incluse dans bl-120 : Europe 25 Go ne peut pas être ajoutée.
         send("/api/v1/contracts", """
                 {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","options":["europe-plus"]}""")
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].message").value("Option Europe 25 Go est incompatible avec Option Europe 10 Go."));
-        // Europe 10 Go ne liste aucune option : avec Multi-SIM, la commande passe les contrôles d'options.
-        send("/api/v1/contracts", """
-                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-60","options":["europe","multisim"]}""")
-                .andExpect(status().isCreated());
+                .andExpect(jsonPath("$.errors[0].message").value("Options incompatibles : Option Europe 10 Go et Option Europe 25 Go."));
     }
 
     @Test

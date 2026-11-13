@@ -85,13 +85,13 @@ Chaque offre de `GET /catalog/offers` porte ce qui dépend d'elle :
   gamme, 10 € sinon ; non éligible pour la Carte Prépayée) ;
 - `options` : options proposées avec cette offre, à un prix propre à l'offre ; une option `included` est gratuite
   et toujours active ; `incompatibleOptions` liste les identifiants des options qui ne peuvent pas être actives en
-  même temps qu'elle (incompatibilité à sens unique : seule la liste de l'option active compte) ;
+  même temps qu'elle (l'incompatibilité vaut dans les deux sens, même déclarée d'un seul côté) ;
 - `promo` : remise api-promo advice, appliquée automatiquement (`monthlyDiscount`, `durationMonths`) ; une seule
   par offre (les remises ne se cumulent pas), `null` si l'offre n'en a pas.
 
 Une commande ne peut porter que des options proposées avec l'offre choisie (ou, pour une modification d'options,
-avec l'offre actuelle de la ligne), et aucune option active (incluse comprise) ne peut figurer dans la liste
-`incompatibleOptions` d'une autre option active (erreur « … est incompatible avec … » sur le champ `options`).
+avec l'offre actuelle de la ligne), sans deux options incompatibles, une option incluse comprise
+(erreur « Options incompatibles : … et … » sur le champ `options`).
 
 ### Terminaux
 
