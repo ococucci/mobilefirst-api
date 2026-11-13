@@ -16,8 +16,9 @@ Prérequis : Java 21.
 ```
 
 - Documentation OpenAPI : http://localhost:8080/swagger-ui.html (JSON : `/v3/api-docs`)
-- Santé : http://localhost:8080/actuator/health
-- CORS : `orderfirst.cors.allowed-origins` (par défaut `http://localhost:4200`, le front en développement)
+- Santé : http://localhost:8080/actuator/health (appelé par le front au démarrage pour vérifier que l'API répond)
+- CORS : `orderfirst.cors.allowed-origins` pour `/api/**` et `management.endpoints.web.cors.allowed-origins` pour
+  le health (par défaut `http://localhost:4200`, le front en développement) : ajouter l'origine du front aux deux
 
 ## Endpoints
 
