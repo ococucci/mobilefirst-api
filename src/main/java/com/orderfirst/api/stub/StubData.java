@@ -73,10 +73,7 @@ final class StubData {
     /** Résultat du re-scoring Préventel pour les clients en base (ligne Card qui change de forfait). */
     static final Map<String, Score> RESCORE = Map.of("CL-000101", Score.vert, "CL-000102", Score.orange);
 
-    /**
-     * Options incompatibles. Chaque incompatibilité n'est déclarée que d'un côté, comme le catalogue peut le faire :
-     * elle s'applique quand même dans les deux sens.
-     */
+    /** Options incompatibles : l'option en clé ne peut pas être active en même temps que les options listées. */
     private static final Map<String, List<String>> INCOMPATIBLE = Map.of(
             "europe-plus", List.of("europe"),
             "montre", List.of("multisim"));

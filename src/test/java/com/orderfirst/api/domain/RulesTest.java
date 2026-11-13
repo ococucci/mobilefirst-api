@@ -41,15 +41,22 @@ class RulesTest {
     }
 
     @Test
-    void incompatibleOptionsExcludeEachOtherBothWays() {
-        // c est incompatible avec a (déclaré sur c seulement) ; d est incompatible avec l'option incluse.
+    void incompatibilityIsOneWay() {
+        // c liste a ; l'option incluse liste d.
         final var offer = new Offer("o", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of(10), List.of(
                 new OfferOption("a", "A", 5, false), new OfferOption("b", "B", 3, false),
                 new OfferOption("c", "C", 9, false, List.of("a")), new OfferOption("d", "D", 2, false),
                 new OfferOption("inc", "Incluse", 0, true, List.of("d"))), null);
         assertNull(Rules.incompatiblePair(offer, List.of("a", "b")));
-        assertEquals(List.of("a", "c"), Rules.incompatiblePair(offer, List.of("c", "a")).stream().map(OfferOption::getId).toList());
-        assertEquals(List.of("d", "inc"), Rules.incompatiblePair(offer, List.of("d")).stream().map(OfferOption::getId).toList());
+        assertEquals(List.of("c", "a"), Rules.incompatiblePair(offer, List.of("a", "c")).stream().map(OfferOption::getId).toList());
+        assertEquals(List.of("inc", "d"), Rules.incompatiblePair(offer, List.of("d")).stream().map(OfferOption::getId).toList());
+        assertNull(Rules.incompatiblePair(offer, List.of("c", "b")));
+        // Catalogue réel : chaque option liste les précédentes ; une option seule est acceptée.
+        final var ids = List.of("prev", "sva", "blocage", "cine", "tv");
+        final var real = new Offer("r", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of(10),
+                ids.stream().map(id -> new OfferOption(id, id, 0, false, ids.subList(0, ids.indexOf(id)))).toList(), null);
+        ids.forEach(id -> assertNull(Rules.incompatiblePair(real, List.of(id))));
+        assertEquals(List.of("tv", "prev"), Rules.incompatiblePair(real, List.of("prev", "tv")).stream().map(OfferOption::getId).toList());
     }
 
     @Test

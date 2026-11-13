@@ -127,13 +127,16 @@ public final class Rules {
         return offer.getOptions().stream().filter(o -> o.isIncluded() || optionIds.contains(o.getId())).toList();
     }
 
-    /** Première paire d'options actives incompatibles entre elles (options incluses comprises), ou null. */
+    /**
+     * Première paire d'options actives (options incluses comprises) dont la première liste la seconde dans ses
+     * incompatibilités, ou null. L'incompatibilité est à sens unique.
+     */
     public static List<OfferOption> incompatiblePair(final Offer offer, final List<String> optionIds) {
         final var active = selectedOptions(offer, optionIds);
-        for (int i = 0; i < active.size(); i++) {
-            for (int j = i + 1; j < active.size(); j++) {
-                if (active.get(i).isIncompatibleWith(active.get(j))) {
-                    return List.of(active.get(i), active.get(j));
+        for (final var option : active) {
+            for (final var other : active) {
+                if (option.excludes(other)) {
+                    return List.of(option, other);
                 }
             }
         }
