@@ -35,7 +35,7 @@ final class StubData {
                         new Identity("Mme", "Dupont", "Marie", "1988-03-14", "971 · Guadeloupe", "Française",
                                 PieceType.CNI, "12AB34567", "0690123456", "marie.dupont@exemple.fr"),
                         null,
-                        new Address("12 rue des Flamboyants", "97100", "Basse-Terre", "Résidence Les Palmiers, bât. B"),
+                        new Address("12", "rue des Flamboyants", "97100", "Basse-Terre", "Résidence Les Palmiers, bât. B"),
                         Score.vert,
                         List.of(
                                 new Line("0690123456", "bl-60", "Forfait bloqué 60 Go", 22.99, false, SimType.physique, List.of("europe", "multisim")),
@@ -46,21 +46,21 @@ final class StubData {
                         new Identity("M.", "Martin", "Jean", "1975-07-02", "972 · Martinique", "Française",
                                 PieceType.PASSEPORT, "19FR55120", "0696778899", "jean.martin@exemple.fr"),
                         null,
-                        new Address("4 avenue des Caraïbes", "97200", "Fort-de-France", ""),
+                        new Address("4", "avenue des Caraïbes", "97200", "Fort-de-France", ""),
                         Score.orange,
                         List.of(new Line("0696778899", "pp-classique", "Card prépayée", null, true, SimType.physique, List.of()))),
                 new Customer("CL-000103", CustomerType.GP,
                         new Identity("M.", "Bernard", "Luc", "1990-11-21", "973 · Guyane", "",
                                 PieceType.CNI, "88CD12345", "0694999000", "luc.bernard@exemple.fr"),
                         null,
-                        new Address("8 rue Lallouette", "97300", "Cayenne", ""),
+                        new Address("8", "rue Lallouette", "97300", "Cayenne", ""),
                         Score.rouge,
                         List.of(new Line("0694999000", "nb-10", "Forfait 10 Go", 9.99, false, SimType.physique, List.of()))),
                 new Customer("CL-000201", CustomerType.PRO,
                         new Identity("Mme", "Lebon", "Sophie", "1982-05-09", "971 · Guadeloupe", "Française",
                                 PieceType.CNI, "45GH78901", "0690400500", "contact@boulangerie-des-iles.fr"),
                         new Company("Boulangerie des Îles", "812345678", "81234567800015"),
-                        new Address("25 boulevard Légitimus", "97110", "Pointe-à-Pitre", ""),
+                        new Address("25", "boulevard Légitimus", "97110", "Pointe-à-Pitre", ""),
                         Score.vert,
                         List.of(
                                 new Line("0690400500", "nb-200", "Forfait 200 Go 5G", 34.99, false, SimType.physique, List.of("international")),
@@ -181,12 +181,12 @@ final class StubData {
             "8933010000000000035", "8933010000000000043");
 
     static final List<AddressSuggestion> ADDRESSES = List.of(
-            new AddressSuggestion("12 rue des Flamboyants", "97100", "Basse-Terre"),
-            new AddressSuggestion("25 boulevard Légitimus", "97110", "Pointe-à-Pitre"),
-            new AddressSuggestion("3 rue Frébault", "97110", "Pointe-à-Pitre"),
-            new AddressSuggestion("14 rue Schoelcher", "97100", "Basse-Terre"),
-            new AddressSuggestion("4 avenue des Caraïbes", "97200", "Fort-de-France"),
-            new AddressSuggestion("8 rue Lallouette", "97300", "Cayenne"),
-            new AddressSuggestion("1 place de la Victoire", "97110", "Pointe-à-Pitre"),
-            new AddressSuggestion("17 route de Gosier", "97190", "Le Gosier"));
+            new AddressSuggestion("12", "rue des Flamboyants", "97100", "Basse-Terre"),
+            new AddressSuggestion("25", "boulevard Légitimus", "97110", "Pointe-à-Pitre"),
+            new AddressSuggestion("3", "rue Frébault", "97110", "Pointe-à-Pitre"),
+            new AddressSuggestion("14", "rue Schoelcher", "97100", "Basse-Terre"),
+            new AddressSuggestion("4", "avenue des Caraïbes", "97200", "Fort-de-France"),
+            new AddressSuggestion("8", "rue Lallouette", "97300", "Cayenne"),
+            new AddressSuggestion("1", "place de la Victoire", "97110", "Pointe-à-Pitre"),
+            new AddressSuggestion("17", "route de Gosier", "97190", "Le Gosier"));
 }

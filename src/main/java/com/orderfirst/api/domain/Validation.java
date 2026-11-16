@@ -80,7 +80,8 @@ public final class Validation {
     }
 
     public Validation address(final String prefix, final Address a) {
-        return check(a == null || isBlank(a.getLigne()) || isBlank(a.getCodePostal()) || isBlank(a.getCommune()),
+        // Le numéro de voie est facultatif (voie ou lieu-dit sans numéro).
+        return check(a == null || isBlank(a.getNomVoie()) || isBlank(a.getCodePostal()) || isBlank(a.getCommune()),
                 prefix, "L'adresse de facturation est obligatoire.");
     }
 

@@ -88,7 +88,7 @@ final class DocumentStubs {
             }
             return StubData.ADDRESSES.stream()
                     .filter(a -> {
-                        final var text = (a.getLigne() + " " + a.getCodePostal() + " " + a.getCommune()).toLowerCase(Locale.ROOT);
+                        final var text = (a.getNumeroVoie() + " " + a.getNomVoie() + " " + a.getCodePostal() + " " + a.getCommune()).toLowerCase(Locale.ROOT);
                         return words.stream().allMatch(text::contains);
                     })
                     .limit(5)

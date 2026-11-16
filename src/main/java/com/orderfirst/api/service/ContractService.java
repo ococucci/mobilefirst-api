@@ -65,7 +65,8 @@ public class ContractService {
         lines.add("Ligne : " + c.msisdn());
         if (r.getFlow() == Flow.acquisition) {
             final var a = r.getBillingAddress();
-            lines.add("Adresse de facturation : " + a.getLigne() + ", " + a.getCodePostal() + " " + a.getCommune());
+            lines.add("Adresse de facturation : " + a.voie() + ", " + a.getCodePostal() + " " + a.getCommune()
+                    + (Rules.isBlank(a.getComplement()) ? "" : " (" + a.getComplement().trim() + ")"));
             lines.add(r.getNumber().getMode() == NumberMode.portabilite
                     ? "Portabilité depuis " + r.getNumber().getOperator() + " le " + r.getNumber().getPortingDate()
                     : "Nouveau numéro");

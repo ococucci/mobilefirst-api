@@ -2,27 +2,37 @@ package com.orderfirst.api.model;
 
 import java.util.Objects;
 
-/** Adresse proposée par Api-ORAS. */
+/** Adresse proposée par Api-ORAS : numéro et nom de la voie, code postal et commune. */
 public class AddressSuggestion {
-    private String ligne;
+    private String numeroVoie;
+    private String nomVoie;
     private String codePostal;
     private String commune;
 
     public AddressSuggestion() {
     }
 
-    public AddressSuggestion(final String ligne, final String codePostal, final String commune) {
-        this.ligne = ligne;
+    public AddressSuggestion(final String numeroVoie, final String nomVoie, final String codePostal, final String commune) {
+        this.numeroVoie = numeroVoie;
+        this.nomVoie = nomVoie;
         this.codePostal = codePostal;
         this.commune = commune;
     }
 
-    public String getLigne() {
-        return ligne;
+    public String getNumeroVoie() {
+        return numeroVoie;
     }
 
-    public void setLigne(final String ligne) {
-        this.ligne = ligne;
+    public void setNumeroVoie(final String numeroVoie) {
+        this.numeroVoie = numeroVoie;
+    }
+
+    public String getNomVoie() {
+        return nomVoie;
+    }
+
+    public void setNomVoie(final String nomVoie) {
+        this.nomVoie = nomVoie;
     }
 
     public String getCodePostal() {
@@ -44,16 +54,16 @@ public class AddressSuggestion {
     @Override
     public boolean equals(final Object o) {
         return this == o || o instanceof final AddressSuggestion that
-                && Objects.equals(ligne, that.ligne) && Objects.equals(codePostal, that.codePostal) && Objects.equals(commune, that.commune);
+                && Objects.equals(numeroVoie, that.numeroVoie) && Objects.equals(nomVoie, that.nomVoie) && Objects.equals(codePostal, that.codePostal) && Objects.equals(commune, that.commune);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ligne, codePostal, commune);
+        return Objects.hash(numeroVoie, nomVoie, codePostal, commune);
     }
 
     @Override
     public String toString() {
-        return "AddressSuggestion[" + "ligne=" + ligne + ", " + "codePostal=" + codePostal + ", " + "commune=" + commune + "]";
+        return "AddressSuggestion[" + "numeroVoie=" + numeroVoie + ", " + "nomVoie=" + nomVoie + ", " + "codePostal=" + codePostal + ", " + "commune=" + commune + "]";
     }
 }

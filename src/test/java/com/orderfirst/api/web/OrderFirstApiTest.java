@@ -51,7 +51,7 @@ class OrderFirstApiTest {
              "departementNaissance":"971 · Guadeloupe","nationalite":"Française","pieceType":"CNI",
              "pieceNumero":"12AB34567","mobileContact":"0690123456","email":"marie.dupont@exemple.fr"}""";
     private static final String ADDRESS = """
-            {"ligne":"12 rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","complement":""}""";
+            {"numeroVoie":"12","nomVoie":"rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","complement":""}""";
     private static final String TODAY = LocalDate.now(ZoneId.of("America/Guadeloupe")).toString();
 
     /** Messages publiés dans le bus PubSub pendant le test. */
@@ -245,6 +245,28 @@ class OrderFirstApiTest {
                 {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","options":["europe-plus"]}""")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].message").value("Options incompatibles : Option Europe 10 Go et Option Europe 25 Go."));
+    }
+
+    @Test
+    void addressSuggestionsAreDetailed() throws Exception {
+        mvc.perform(get("/api/v1/addresses").param("q", "Flamboyants"))
+                .andExpect(jsonPath("$[0].numeroVoie").value("12"))
+                .andExpect(jsonPath("$[0].nomVoie").value("rue des Flamboyants"))
+                .andExpect(jsonPath("$[0].codePostal").value("97100"))
+                .andExpect(jsonPath("$[0].commune").value("Basse-Terre"))
+                .andExpect(jsonPath("$[0].ligne").doesNotExist());
+    }
+
+    @Test
+    void billingAddressNeedsStreetNameButNotNumber() throws Exception {
+        final var order = """
+                {"flow":"acquisition","customerId":"CL-000101","billingAddress":%s}""";
+        send("/api/v1/contracts", order.formatted("""
+                {"numeroVoie":"12","nomVoie":"","codePostal":"97100","commune":"Basse-Terre"}"""))
+                .andExpect(jsonPath("$.errors[*].field").value(hasItem("billingAddress")));
+        send("/api/v1/contracts", order.formatted("""
+                {"numeroVoie":"","nomVoie":"Lieu-dit Morne Rouge","codePostal":"97100","commune":"Basse-Terre"}"""))
+                .andExpect(jsonPath("$.errors[*].field").value(not(hasItem("billingAddress"))));
     }
 
     @Test
