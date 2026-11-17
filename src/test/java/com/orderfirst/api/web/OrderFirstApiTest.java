@@ -106,8 +106,13 @@ class OrderFirstApiTest {
         mvc.perform(get("/api/v1/customers").param("msisdn", "06 90 12 34 56"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("CL-000101"))
-                .andExpect(jsonPath("$.lines[2].isCard").value(true))
-                .andExpect(jsonPath("$.lines[2].monthlyPrice").isEmpty());
+                .andExpect(jsonPath("$.lines").doesNotExist());
+        // Les lignes sont demandées à part, pour les seules demandes qui portent sur une ligne existante.
+        mvc.perform(get("/api/v1/customers/CL-000101/lines"))
+                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$[2].isCard").value(true))
+                .andExpect(jsonPath("$[2].monthlyPrice").isEmpty());
+        mvc.perform(get("/api/v1/customers/CL-999999/lines")).andExpect(status().isNotFound());
         mvc.perform(get("/api/v1/customers").param("msisdn", "0690000001"))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));

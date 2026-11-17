@@ -41,6 +41,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `POST /customers/existence-checks` | Recherche d'existence avant création d'un client sans numéro : le client existant, ou 204 | Party |
 | `POST /customers` | Contrôle Préventel puis création (pas de création si score rouge) | api-scoring, Party |
 | `PUT /customers/{id}` | Étape Client : mise à jour, Préventel relancé si nom, prénom ou date de naissance changent | api-scoring, Party |
+| `GET /customers/{id}/lines` | Lignes mobiles du client (non renvoyées avec le client : demandées seulement pour un changement de forfait, d'options ou de SIM) | Party |
 | `GET /customers/{id}/pending-lines` | Lignes avec une commande en cours | api-order |
 | `POST /customers/{id}/lines/{msisdn}/rescoring` | Re-scoring d'une ligne Card avant changement de forfait | api-scoring |
 | `GET /catalog/offers` | Forfaits, avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |

@@ -1,5 +1,7 @@
 package com.orderfirst.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -75,6 +77,11 @@ public class Customer {
         this.score = score;
     }
 
+    /**
+     * Lignes du client : utilisées par le serveur, mais pas renvoyées avec le client. Le front les demande à part
+     * (GET /customers/{id}/lines), seulement pour les demandes qui portent sur une ligne existante.
+     */
+    @JsonIgnore
     public List<Line> getLines() {
         return lines;
     }

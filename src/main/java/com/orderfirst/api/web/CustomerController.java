@@ -5,6 +5,7 @@ import com.orderfirst.api.model.Customer;
 import com.orderfirst.api.model.CustomerCreation;
 import com.orderfirst.api.model.CustomerUpdate;
 import com.orderfirst.api.model.Identity;
+import com.orderfirst.api.model.Line;
 import com.orderfirst.api.model.Score;
 import com.orderfirst.api.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,6 +70,12 @@ public class CustomerController {
     @PutMapping("/{id}")
     public CustomerUpdate update(@PathVariable final String id, @RequestBody final CreateRequest request) {
         return customers.update(id, request.identity(), request.address());
+    }
+
+    @Operation(summary = "Lignes mobiles du client, demandées seulement pour un changement de forfait, d'options ou de SIM")
+    @GetMapping("/{id}/lines")
+    public List<Line> lines(@PathVariable final String id) {
+        return customers.lines(id);
     }
 
     @Operation(summary = "Lignes du client ayant une commande en cours (api-order)")

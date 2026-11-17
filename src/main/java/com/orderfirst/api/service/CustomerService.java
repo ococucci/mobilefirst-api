@@ -84,6 +84,11 @@ public class CustomerService {
         return new CustomerUpdate(score, rescore, party.update(id, identity, address, score));
     }
 
+    /** Lignes mobiles du client (changement de forfait, d'options ou de SIM). */
+    public List<Line> lines(final String id) {
+        return byId(id).getLines();
+    }
+
     /** Lignes du client ayant une commande en cours (api-order) : elles ne peuvent pas être modifiées. */
     public List<String> pendingLines(final String id) {
         return orders.linesWithPendingOrder(byId(id).getLines().stream().map(Line::getMsisdn).toList());
