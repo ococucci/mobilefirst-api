@@ -88,7 +88,9 @@ public class ContractService {
                 lines.add("Remise : " + c.offer().getPromo().getLabel());
             }
             if (openMl) {
-                lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie");
+                final var label = c.offer().getOpenMl().getLabel();
+                lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie"
+                        + (Rules.isBlank(label) ? "" : " (" + label + ")"));
             }
             final double monthly = Rules.monthly(c.offer(), r.getOptionsOrEmpty(), openMl);
             if (!Rules.hasOneOffPrice(c.offer()) || monthly > 0) {

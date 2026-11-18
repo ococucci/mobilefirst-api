@@ -355,7 +355,8 @@ public class OrderService {
         final boolean openMl = !isBlank(r.getOpenMlSponsor()) && Rules.isOpenMlAvailable(offer, c.line());
         final double monthly = Rules.monthly(offer, r.getOptionsOrEmpty(), openMl);
         return new OfferSnapshot(offer.getId(), offer.getLabel(), offer.getPrice(), Rules.selectedOptions(offer, r.getOptionsOrEmpty()),
-                offer.getPromo(), openMl ? new OpenMlApplied(Rules.digits(r.getOpenMlSponsor()), Rules.openMlDiscount(offer)) : null,
+                offer.getPromo(), openMl ? new OpenMlApplied(offer.getOpenMl().getId(), offer.getOpenMl().getLabel(), Rules.digits(r.getOpenMlSponsor()),
+                        Rules.openMlDiscount(offer)) : null,
                 monthly, Rules.monthlyDuringPromo(offer, monthly));
     }
 

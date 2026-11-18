@@ -186,7 +186,7 @@ class OrderFirstApiTest {
         assertEquals("bl-60", offer.getId());
         assertEquals(List.of("multisim"), offer.getOptions().stream().map(OfferOption::getId).toList());
         assertEquals("promo-10e-6m", offer.getPromo().getId());
-        assertEquals(new OpenMlApplied("0690654321", 10), offer.getOpenMl());
+        assertEquals(new OpenMlApplied("OPENML_10E", "Open ML −10 €/mois", "0690654321", 10), offer.getOpenMl());
         assertEquals(15.99, offer.getMonthlyPrice());
         assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
         final var terminal = published().getTerminal();
@@ -206,6 +206,9 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$[?(@.id == 'bl-120')].options[?(@.id == 'europe')].included").value(hasItem(true)))
                 .andExpect(jsonPath("$[?(@.id == 'nb-200')].options[?(@.id == 'international')].price").value(hasItem(8.0)))
                 .andExpect(jsonPath("$[?(@.id == 'pp-classique')].openMl.eligible").value(hasItem(false)))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].openMl.id").value(hasItem("OPENML_10E")))
+                .andExpect(jsonPath("$[?(@.id == 'bl-60')].openMl.label").value(hasItem("Open ML −10 €/mois")))
+                .andExpect(jsonPath("$[?(@.id == 'bl-20')].openMl.label").value(hasItem("Open ML −5 €/mois")))
                 .andExpect(jsonPath("$[?(@.id == 'bl-60')].level").value(hasItem("silver")))
                 .andExpect(jsonPath("$[?(@.id == 'pp-classique')].level").value(hasItem("card")))
                 .andExpect(jsonPath("$[?(@.id == 'bl-60')].options[?(@.id == 'europe-plus')].incompatibleOptions[0]").value(hasItem("europe")))

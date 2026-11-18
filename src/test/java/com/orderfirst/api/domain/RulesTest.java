@@ -32,7 +32,7 @@ class RulesTest {
 
     private static Offer offer(final FamilyId family, final double price, final boolean entryLevel) {
         return new Offer("o", family, OfferLevel.silver, "Offre", "", price,
-                family == FamilyId.prepaye ? OpenMl.none() : OpenMl.of(entryLevel ? 5 : 10),
+                family == FamilyId.prepaye ? OpenMl.none() : OpenMl.of("OPENML", "Open ML", entryLevel ? 5 : 10),
                 List.of(new OfferOption("a", "A", 5, false), new OfferOption("inc", "Incluse", 0, true)), null);
     }
 
@@ -43,7 +43,7 @@ class RulesTest {
     @Test
     void incompatibleOptionsExcludeEachOtherBothWays() {
         // c est incompatible avec a (déclaré sur c seulement) ; d est incompatible avec l'option incluse.
-        final var offer = new Offer("o", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of(10), List.of(
+        final var offer = new Offer("o", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of("OPENML", "Open ML", 10), List.of(
                 new OfferOption("a", "A", 5, false), new OfferOption("b", "B", 3, false),
                 new OfferOption("c", "C", 9, false, List.of("a")), new OfferOption("d", "D", 2, false),
                 new OfferOption("inc", "Incluse", 0, true, List.of("d"))), null);

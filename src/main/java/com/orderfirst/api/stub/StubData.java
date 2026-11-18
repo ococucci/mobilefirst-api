@@ -99,6 +99,11 @@ final class StubData {
         return new OfferOption(o.getId(), o.getLabel(), 0, true, o.getIncompatibleOptions());
     }
 
+    /** Remise Open ML décrite comme une promo : code et libellé. */
+    private static OpenMl openMl(final int monthlyDiscount) {
+        return OpenMl.of("OPENML_" + monthlyDiscount + "E", "Open ML −" + monthlyDiscount + " €/mois", monthlyDiscount);
+    }
+
     private static Offer offer(final String id, final FamilyId family, final OfferLevel level, final String label, final String detail,
                                final double price, final OpenMl openMl, final OfferOption... options) {
         return new Offer(id, family, level, label, detail, price, openMl, List.of(options), null);
@@ -106,22 +111,22 @@ final class StubData {
 
     /** Offres Castor et options proposées avec chacune (prix propres à l'offre, options incluses). */
     static final List<Offer> OFFERS = List.of(
-            offer("bl-20", FamilyId.bloque, OfferLevel.nonsub, "Forfait bloqué 20 Go", "Appels 2 h, SMS illimités", 15.99, OpenMl.of(5),
+            offer("bl-20", FamilyId.bloque, OfferLevel.nonsub, "Forfait bloqué 20 Go", "Appels 2 h, SMS illimités", 15.99, openMl(5),
                     option("europe", 5), option("multisim", 3), option("securite", 2)),
-            offer("bl-60", FamilyId.bloque, OfferLevel.silver, "Forfait bloqué 60 Go", "Appels et SMS illimités", 22.99, OpenMl.of(10),
+            offer("bl-60", FamilyId.bloque, OfferLevel.silver, "Forfait bloqué 60 Go", "Appels et SMS illimités", 22.99, openMl(10),
                     option("europe", 5), option("europe-plus", 9), option("multisim", 3), option("montre", 5), option("securite", 2)),
-            offer("bl-120", FamilyId.bloque, OfferLevel.gold, "Forfait bloqué 120 Go", "Appels et SMS illimités, 5G", 29.99, OpenMl.of(10),
+            offer("bl-120", FamilyId.bloque, OfferLevel.gold, "Forfait bloqué 120 Go", "Appels et SMS illimités, 5G", 29.99, openMl(10),
                     included("europe"), option("europe-plus", 7), option("multisim", 3), option("montre", 5), option("international", 10)),
-            offer("nb-10", FamilyId.nonBloque, OfferLevel.nonsub, "Forfait 10 Go", "Appels et SMS illimités", 9.99, OpenMl.of(5),
+            offer("nb-10", FamilyId.nonBloque, OfferLevel.nonsub, "Forfait 10 Go", "Appels et SMS illimités", 9.99, openMl(5),
                     option("europe", 5), option("securite", 2)),
-            offer("nb-100", FamilyId.nonBloque, OfferLevel.elite, "Forfait 100 Go", "Appels et SMS illimités, 5G", 24.99, OpenMl.of(10),
+            offer("nb-100", FamilyId.nonBloque, OfferLevel.elite, "Forfait 100 Go", "Appels et SMS illimités, 5G", 24.99, openMl(10),
                     option("europe", 5), option("europe-plus", 9), option("multisim", 3), option("montre", 5), option("securite", 2),
                     option("international", 10)),
-            offer("nb-200", FamilyId.nonBloque, OfferLevel.platine, "Forfait 200 Go 5G", "Appels illimités, 35 Go en Europe", 34.99, OpenMl.of(10),
+            offer("nb-200", FamilyId.nonBloque, OfferLevel.platine, "Forfait 200 Go 5G", "Appels illimités, 35 Go en Europe", 34.99, openMl(10),
                     included("europe"), option("multisim", 3), option("securite", 2), option("international", 8)),
-            offer("ie-4g", FamilyId.internet, OfferLevel.nonsub, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, OpenMl.of(5),
+            offer("ie-4g", FamilyId.internet, OfferLevel.nonsub, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, openMl(5),
                     option("securite", 2)),
-            offer("home-5g", FamilyId.internet, OfferLevel.silver, "4G/5G Home", "Internet illimité à domicile", 34.99, OpenMl.of(10)),
+            offer("home-5g", FamilyId.internet, OfferLevel.silver, "4G/5G Home", "Internet illimité à domicile", 34.99, openMl(10)),
             offer("pp-classique", FamilyId.prepaye, OfferLevel.card, "Carte Prépayée", "Sans engagement, rechargeable", 10, OpenMl.none()));
 
     /** Remise api-promo advice de chaque offre éligible (une seule par offre). */

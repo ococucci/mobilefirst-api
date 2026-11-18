@@ -84,7 +84,8 @@ Chaque offre de `GET /catalog/offers` porte ce qui dépend d'elle :
 
 - `level` : niveau de l'offre (`nonsub`, `card`, `silver`, `gold`, `elite`, `platine`), qui fixe le tarif
   (niveau de subvention) du terminal vendu avec elle ;
-- `openMl` : éligibilité et montant de la remise Open ML (`monthlyDiscount` : 5 € pour une offre d'entrée de
+- `openMl` : éligibilité, code (`id`) et libellé (`label`, affiché sur l'offre comme une promo) et montant de la
+  remise Open ML (`monthlyDiscount` : 5 € pour une offre d'entrée de
   gamme, 10 € sinon ; non éligible pour la Carte Prépayée) ;
 - `options` : options proposées avec cette offre, à un prix propre à l'offre ; une option `included` est gratuite
   et toujours active ; `incompatibleOptions` liste les identifiants des options qui ne peuvent pas être actives en
@@ -124,7 +125,7 @@ saisie (`order`), le message recopie ce qui a été vendu, avec libellés et pri
   "id": "bl-60", "label": "Forfait bloqué 60 Go", "price": 22.99,
   "options": [ { "id": "europe", "label": "Option Europe 10 Go", "price": 5.0, "included": false } ],
   "promo": { "id": "promo-10e-6m", "label": "−10 € / 6 mois", "monthlyDiscount": 10.0, "durationMonths": 6 },
-  "openMl": { "sponsor": "0690654321", "monthlyDiscount": 10.0 },
+  "openMl": { "id": "OPENML_10E", "label": "Open ML −10 €/mois", "sponsor": "0690654321", "monthlyDiscount": 10.0 },
   "monthlyPrice": 17.99,
   "monthlyPriceDuringPromo": 7.99
 }
