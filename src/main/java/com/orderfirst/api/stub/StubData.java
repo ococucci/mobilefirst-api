@@ -122,7 +122,7 @@ final class StubData {
             offer("ie-4g", FamilyId.internet, OfferLevel.nonsub, "Internet Everywhere 4G", "100 Go, routeur nomade", 19.99, OpenMl.of(5),
                     option("securite", 2)),
             offer("home-5g", FamilyId.internet, OfferLevel.silver, "4G/5G Home", "Internet illimité à domicile", 34.99, OpenMl.of(10)),
-            offer("pp-classique", FamilyId.prepaye, OfferLevel.card, "Carte Prépayée", "Sans engagement, rechargeable", 0, OpenMl.none()));
+            offer("pp-classique", FamilyId.prepaye, OfferLevel.card, "Carte Prépayée", "Sans engagement, rechargeable", 10, OpenMl.none()));
 
     /** Remise api-promo advice de chaque offre éligible (une seule par offre). */
     static final Map<String, Promo> PROMOS = Map.of(

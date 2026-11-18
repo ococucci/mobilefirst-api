@@ -149,10 +149,24 @@ public final class Rules {
         return price;
     }
 
-    /** Mensualité hors remises temporaires : prix de l'offre, options payantes, remise Open ML. */
+    /** Carte Prépayée : son prix est un tarif unique, réglé en caisse, et non une mensualité. */
+    public static boolean hasOneOffPrice(final Offer offer) {
+        return offer != null && offer.getFamily() == FamilyId.prepaye;
+    }
+
+    /** Tarif unique de l'offre à régler en caisse (Carte Prépayée), 0 pour une offre à mensualité. */
+    public static double oneOffPrice(final Offer offer) {
+        return hasOneOffPrice(offer) ? round(offer.getPrice()) : 0;
+    }
+
+    /**
+     * Mensualité hors remises temporaires : prix de l'offre, options payantes, remise Open ML. Le prix d'une Carte
+     * Prépayée n'entre pas dans la mensualité (tarif unique).
+     */
     public static double monthly(final Offer offer, final List<String> optionIds, final boolean openMl) {
         final double opts = selectedOptions(offer, optionIds).stream().filter(o -> !o.isIncluded()).mapToDouble(OfferOption::getPrice).sum();
-        return Math.max(0, round(offer.getPrice() + opts - (openMl ? openMlDiscount(offer) : 0)));
+        final double base = hasOneOffPrice(offer) ? 0 : offer.getPrice();
+        return Math.max(0, round(base + opts - (openMl ? openMlDiscount(offer) : 0)));
     }
 
     /** Mensualité pendant la remise de l'offre (appliquée automatiquement) ; null si l'offre n'a pas de remise. */
@@ -164,9 +178,9 @@ public final class Rules {
         return ReferenceData.simReasons().stream().anyMatch(r -> r.getId().equals(reasonId) && r.isFee()) ? ReferenceData.SIM_LOSS_FEE : 0;
     }
 
-    /** Montant à régler en caisse pour une acquisition : puce Carte Prépayée et terminal éventuel. */
+    /** Montant à régler en caisse pour une acquisition : tarif de la Carte Prépayée et terminal éventuel. */
     public static double acquisitionCashDue(final Offer offer, final double terminalPrice) {
-        return round((offer != null && offer.getFamily() == FamilyId.prepaye ? ReferenceData.CARD_SIM_PRICE : 0) + terminalPrice);
+        return round(oneOffPrice(offer) + terminalPrice);
     }
 
     /** Pas de contrat pour une modification d'options. */

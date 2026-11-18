@@ -78,7 +78,11 @@ public class ContractService {
             if (c.line() != null) {
                 lines.add("Offre actuelle : " + c.line().getOfferLabel());
             }
-            lines.add("Offre : " + c.offer().getLabel() + " - " + euro(c.offer().getPrice()) + "/mois");
+            if (Rules.hasOneOffPrice(c.offer())) {
+                lines.add("Offre : " + c.offer().getLabel() + " - " + euro(c.offer().getPrice()) + " (tarif unique, à régler en caisse)");
+            } else {
+                lines.add("Offre : " + c.offer().getLabel() + " - " + euro(c.offer().getPrice()) + "/mois");
+            }
             options.forEach(o -> lines.add("Option : " + o.getLabel() + " - " + (o.isIncluded() ? "incluse" : euro(o.getPrice()) + "/mois")));
             if (c.offer().getPromo() != null) {
                 lines.add("Remise : " + c.offer().getPromo().getLabel());
@@ -87,7 +91,9 @@ public class ContractService {
                 lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie");
             }
             final double monthly = Rules.monthly(c.offer(), r.getOptionsOrEmpty(), openMl);
-            lines.add("Mensualité : " + euro(monthly) + "/mois");
+            if (!Rules.hasOneOffPrice(c.offer()) || monthly > 0) {
+                lines.add("Mensualité : " + euro(monthly) + "/mois");
+            }
             final var duringPromo = Rules.monthlyDuringPromo(c.offer(), monthly);
             if (duringPromo != null) {
                 lines.add("Les " + c.offer().getPromo().getDurationMonths() + " premiers mois : " + euro(duringPromo) + "/mois");

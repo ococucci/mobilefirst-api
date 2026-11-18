@@ -24,9 +24,6 @@ public final class ReferenceData {
 
     public static final List<String> DONOR_OPERATORS = List.of("SFR Caraibes", "FREE", "Dauphin Telecom", "UTS", "DIGICEL");
 
-    /** Puce Carte Prépayée, à régler en caisse. */
-    public static final double CARD_SIM_PRICE = 10;
-
     /** Frais de changement de SIM pour perte ou vol, à régler en caisse. */
     public static final double SIM_LOSS_FEE = 10;
 }

@@ -73,7 +73,8 @@ Pour valider : `contractRef` (renvoyé par `POST /contracts`) et `contractSigned
 `cgvAccepted: true` et `privacyAccepted: true`.
 
 Toutes les règles de gestion sont revérifiées côté serveur (le front n'est pas une source de confiance) et le
-montant à régler en caisse est recalculé : puce Carte Prépayée à 10 €, terminal au prix du niveau de l'offre, frais de 10 € pour une SIM
+montant à régler en caisse est recalculé : tarif unique de la Carte Prépayée (son `price`, qui n'est pas une mensualité ; aussi dû pour un passage
+à la Carte Prépayée en changement de forfait), terminal au prix du niveau de l'offre, frais de 10 € pour une SIM
 perdue ou volée. À la validation, la SIM sort du stock, le numéro choisi est réservé, la ligne passe en
 « commande en cours » et le message `orange-order-first.mobile.order-validated` est publié.
 

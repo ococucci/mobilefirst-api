@@ -193,7 +193,8 @@ public class OrderService {
         v.check(offer != null && line != null && offer.getId().equals(line.getOfferId()), "offerId", "Choisissez une offre différente de l'offre actuelle.");
         checkOptions(r, offer, v);
         openMl(r, offer, line, v);
-        return new Checked(line == null ? "" : line.getMsisdn(), 0, customer, offer, line, null);
+        // Passage à une Carte Prépayée : son tarif unique est à régler en caisse.
+        return new Checked(line == null ? "" : line.getMsisdn(), Rules.oneOffPrice(offer), customer, offer, line, null);
     }
 
     private Checked options(final OrderRequest r, final Customer customer, final Validation v) {

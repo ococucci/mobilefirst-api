@@ -110,7 +110,11 @@ class RulesTest {
     void cashAmounts() {
         assertEquals(10, Rules.simChangeFee("perte-vol"));
         assertEquals(0, Rules.simChangeFee("mobile"));
-        assertEquals(10, Rules.acquisitionCashDue(offer(FamilyId.prepaye, 0, true), 0));
+        // Carte Prépayée : son prix est un tarif unique, réglé en caisse, hors mensualité.
+        assertEquals(15, Rules.acquisitionCashDue(offer(FamilyId.prepaye, 15, true), 0));
+        assertEquals(15, Rules.oneOffPrice(offer(FamilyId.prepaye, 15, true)));
+        assertEquals(0, Rules.monthly(offer(FamilyId.prepaye, 15, true), List.of(), false));
+        assertEquals(0, Rules.oneOffPrice(offer(FamilyId.bloque, 20, false)));
         assertEquals(149, Rules.acquisitionCashDue(offer(FamilyId.bloque, 20, false), 149));
         assertFalse(Rules.requiresContract(Flow.options));
         assertTrue(Rules.requiresContract(Flow.sim));
