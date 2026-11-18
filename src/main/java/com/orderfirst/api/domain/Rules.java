@@ -1,5 +1,6 @@
 package com.orderfirst.api.domain;
 
+import com.orderfirst.api.model.Address;
 import com.orderfirst.api.model.FamilyId;
 import com.orderfirst.api.model.Flow;
 import com.orderfirst.api.model.Identity;
@@ -147,6 +148,37 @@ public final class Rules {
             throw new IllegalStateException("Pas de prix " + offer.getLevel() + " pour le terminal " + terminal.getId());
         }
         return price;
+    }
+
+    /**
+     * Territoire déduit du code postal : Saint-Martin (97150) et Saint-Barthélemy (97133) avant le reste de la
+     * Guadeloupe (971), puis Martinique (972) et Guyane (973) ; sinon France. Vide sans code postal.
+     */
+    public static String territoire(final String codePostal) {
+        final var cp = codePostal == null ? "" : codePostal.trim();
+        if (cp.isEmpty()) {
+            return "";
+        }
+        if (cp.equals("97150")) {
+            return "ST-MARTIN";
+        }
+        if (cp.equals("97133")) {
+            return "ST-BARTHELEMY";
+        }
+        return switch (cp.length() >= 3 ? cp.substring(0, 3) : cp) {
+            case "971" -> "GUADELOUPE";
+            case "972" -> "MARTINIQUE";
+            case "973" -> "GUYANE FRANCAISE";
+            default -> "FRANCE";
+        };
+    }
+
+    /** Territoire de l'adresse : celui transmis, ou à défaut celui déduit du code postal. */
+    public static Address withTerritoire(final Address address) {
+        if (address != null && isBlank(address.getTerritoire())) {
+            address.setTerritoire(territoire(address.getCodePostal()));
+        }
+        return address;
     }
 
     /** Carte Prépayée : son prix est un tarif unique, réglé en caisse, et non une mensualité. */

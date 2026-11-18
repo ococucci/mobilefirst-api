@@ -65,7 +65,7 @@ public class CustomerService {
         if (score == Score.rouge) {
             return new CustomerCreation(score, null);
         }
-        return new CustomerCreation(score, party.create(identity, address == null ? new Address("", "", "", "", "") : address, score));
+        return new CustomerCreation(score, party.create(identity, address == null ? new Address("", "", "", "", "", "") : Rules.withTerritoire(address), score));
     }
 
 
@@ -81,7 +81,7 @@ public class CustomerService {
         if (score == Score.rouge) {
             return new CustomerUpdate(score, rescore, current);
         }
-        return new CustomerUpdate(score, rescore, party.update(id, identity, address, score));
+        return new CustomerUpdate(score, rescore, party.update(id, identity, Rules.withTerritoire(address), score));
     }
 
     /** Lignes mobiles du client (changement de forfait, d'options ou de SIM). */

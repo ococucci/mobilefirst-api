@@ -164,6 +164,7 @@ public class OrderService {
         if (customer.getType() == CustomerType.PRO) {
             throw ApiException.rule("Client entreprise : seuls les actes de gestion sur un client existant sont autorisés.");
         }
+        Rules.withTerritoire(r.getBillingAddress());
         v.identity("holder", r.getHolder(), true, today()).address("billingAddress", r.getBillingAddress());
         number(r.getNumber(), v);
         final var offer = offer(r.getOfferId(), customer.getScore(), v);

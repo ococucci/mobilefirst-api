@@ -51,7 +51,7 @@ class OrderFirstApiTest {
              "departementNaissance":"971 · Guadeloupe","nationalite":"Française","pieceType":"CNI",
              "pieceNumero":"12AB34567","mobileContact":"0690123456","email":"marie.dupont@exemple.fr"}""";
     private static final String ADDRESS = """
-            {"numeroVoie":"12","nomVoie":"rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","complement":""}""";
+            {"numeroVoie":"12","nomVoie":"rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","territoire":"GUADELOUPE","complement":""}""";
     private static final String TODAY = LocalDate.now(ZoneId.of("America/Guadeloupe")).toString();
 
     /** Messages publiés dans le bus PubSub pendant le test. */
@@ -263,6 +263,21 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$[0].codePostal").value("97100"))
                 .andExpect(jsonPath("$[0].commune").value("Basse-Terre"))
                 .andExpect(jsonPath("$[0].ligne").doesNotExist());
+    }
+
+    @Test
+    void territoryIsStoredOrDeducedFromPostalCode() throws Exception {
+        // Transmis par le front : conservé.
+        mvc.perform(put("/api/v1/customers/CL-000101").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identity\":" + MARIE + ",\"address\":{\"numeroVoie\":\"1\",\"nomVoie\":\"rue de la République\","
+                                + "\"codePostal\":\"97150\",\"commune\":\"Marigot\",\"territoire\":\"ST-MARTIN\"}}"))
+                .andExpect(jsonPath("$.customer.address.territoire").value("ST-MARTIN"));
+        // Absent : déduit du code postal.
+        mvc.perform(put("/api/v1/customers/CL-000101").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identity\":" + MARIE + ",\"address\":{\"numeroVoie\":\"4\",\"nomVoie\":\"avenue des Caraïbes\","
+                                + "\"codePostal\":\"97200\",\"commune\":\"Fort-de-France\"}}"))
+                .andExpect(jsonPath("$.customer.address.territoire").value("MARTINIQUE"));
+        mvc.perform(get("/api/v1/customers/CL-000102")).andExpect(jsonPath("$.address.territoire").value("MARTINIQUE"));
     }
 
     @Test

@@ -65,6 +65,17 @@ class RulesTest {
     }
 
     @Test
+    void territoryFromPostalCode() {
+        assertEquals("ST-MARTIN", Rules.territoire("97150"));
+        assertEquals("ST-BARTHELEMY", Rules.territoire("97133"));
+        assertEquals("GUADELOUPE", Rules.territoire("97100"));
+        assertEquals("MARTINIQUE", Rules.territoire("97200"));
+        assertEquals("GUYANE FRANCAISE", Rules.territoire("97300"));
+        assertEquals("FRANCE", Rules.territoire("75001"));
+        assertEquals("", Rules.territoire(null));
+    }
+
+    @Test
     void preventelScoreLimitsFamilies() {
         assertEquals(4, Rules.allowedFamilies(Score.vert).size());
         assertEquals(List.of(FamilyId.prepaye), Rules.allowedFamilies(Score.orange));
