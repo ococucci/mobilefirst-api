@@ -20,8 +20,9 @@ final class CatalogueStubs {
 
     @Stub
     static class Castor implements CataloguePort {
+        /** Le bouchon renvoie les mêmes offres quel que soit le territoire. */
         @Override
-        public List<Offer> offers() {
+        public List<Offer> offers(final String territoire) {
             return StubData.OFFERS;
         }
     }

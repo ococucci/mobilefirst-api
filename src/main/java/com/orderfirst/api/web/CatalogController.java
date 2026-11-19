@@ -7,11 +7,13 @@ import com.orderfirst.api.port.RessourcePort;
 import com.orderfirst.api.port.RhocPort;
 import com.orderfirst.api.service.CatalogService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,8 +35,10 @@ public class CatalogController {
     @Operation(summary = "Forfaits avec, pour chacun, ses options, sa remise (appliquée automatiquement, une seule par offre) et l'éligibilité Open ML "
             + "(Catalogue Castor et api-promo advice)")
     @GetMapping("/catalog/offers")
-    public List<Offer> offers() {
-        return catalog.offers();
+    public List<Offer> offers(
+            @Parameter(description = "Territoire de l'adresse du client (ex. GUADELOUPE) : seules les offres vendables sur ce territoire")
+            @RequestParam(required = false) final String territoire) {
+        return catalog.offers(territoire);
     }
 
     @Operation(summary = "Raisons de changement de SIM (frais de 10 € pour perte ou vol)")

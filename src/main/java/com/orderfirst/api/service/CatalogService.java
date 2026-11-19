@@ -1,5 +1,6 @@
 package com.orderfirst.api.service;
 
+import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.PromoAdvicePort;
@@ -19,12 +20,14 @@ public class CatalogService {
         this.promos = promos;
     }
 
-    public List<Offer> offers() {
-        return catalogue.offers().stream().map(this::withPromo).toList();
+    /** Offres vendables sur le territoire de l'adresse du client (toutes si le territoire n'est pas précisé). */
+    public List<Offer> offers(final String territoire) {
+        return catalogue.offers(Rules.isBlank(territoire) ? null : territoire.trim()).stream().map(this::withPromo).toList();
     }
 
+    /** Offre par identifiant, quel que soit le territoire. */
     public Optional<Offer> offer(final String id) {
-        return catalogue.offers().stream().filter(o -> o.getId().equals(id)).findFirst()
+        return catalogue.offers(null).stream().filter(o -> o.getId().equals(id)).findFirst()
                 .map(this::withPromo);
     }
 

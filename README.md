@@ -44,7 +44,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `GET /customers/{id}/lines` | Lignes mobiles du client (non renvoyées avec le client : demandées seulement pour un changement de forfait, d'options ou de SIM) | Party |
 | `GET /customers/{id}/pending-lines` | Lignes avec une commande en cours | api-order |
 | `POST /customers/{id}/lines/{msisdn}/rescoring` | Re-scoring d'une ligne Card avant changement de forfait | api-scoring |
-| `GET /catalog/offers` | Forfaits, avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
+| `GET /catalog/offers?territoire=` | Forfaits vendables sur le territoire de l'adresse du client (toutes les offres sans `territoire`), avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
 | `GET /catalog/sim-reasons`, `GET /catalog/donor-operators` | Listes de référence | — |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
 | `POST /open-ml/sponsor-checks` | Validation du N° sponsor Open ML | api RHOC |
