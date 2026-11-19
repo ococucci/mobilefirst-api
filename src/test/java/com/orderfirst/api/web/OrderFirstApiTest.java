@@ -281,6 +281,17 @@ class OrderFirstApiTest {
     }
 
     @Test
+    void creationKeepsTheAddressEntered() throws Exception {
+        send("/api/v1/customers", """
+                {"identity":{"civilite":"Mme","nom":"Lamarre","prenom":"Julie","dateNaissance":"1992-06-01","pieceType":"CNI","pieceNumero":"CD9876543"},
+                 "address":{"numeroVoie":"3","nomVoie":"rue Frébault","codePostal":"97110","commune":"Pointe-à-Pitre","complement":"2e étage"}}""")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.customer.address.nomVoie").value("rue Frébault"))
+                .andExpect(jsonPath("$.customer.address.complement").value("2e étage"))
+                .andExpect(jsonPath("$.customer.address.territoire").value("GUADELOUPE"));
+    }
+
+    @Test
     void billingAddressNeedsStreetNameButNotNumber() throws Exception {
         final var order = """
                 {"flow":"acquisition","customerId":"CL-000101","billingAddress":%s}""";
