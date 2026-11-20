@@ -64,7 +64,7 @@ public final class Validation {
             check(!Rules.isValidPieceNumber(i.getPieceNumero()), prefix + ".pieceNumero", "N° invalide : 9 ou 12 lettres et chiffres.");
         }
         if (full) {
-            check(isBlank(i.getDepartementNaissance()), prefix + ".departementNaissance", "Le département de naissance est obligatoire.");
+            // Département de naissance et nationalité : facultatifs, en saisie libre.
             if (isBlank(i.getMobileContact())) {
                 check(true, prefix + ".mobileContact", "Le mobile de contact est obligatoire.");
             } else {

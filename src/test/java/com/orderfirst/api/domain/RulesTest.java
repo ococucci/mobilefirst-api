@@ -155,8 +155,9 @@ class RulesTest {
         assertTrue(new Validation().identity("holder", MARIE, true, today).isEmpty());
         final var errors = new Validation().identity("holder",
                 new Identity("Mme", " ", "", "2030-01-01", "", "", PieceType.CNI, "X1", "12", "x"), true, today).errors();
+        // Le département de naissance (vide ici) est facultatif.
         assertEquals(List.of("holder.nom", "holder.prenom", "holder.dateNaissance", "holder.pieceNumero",
-                "holder.departementNaissance", "holder.mobileContact", "holder.email"), List.copyOf(errors.keySet()));
+                "holder.mobileContact", "holder.email"), List.copyOf(errors.keySet()));
         assertEquals("La date de naissance doit être dans le passé.", errors.get("holder.dateNaissance"));
     }
 }
