@@ -15,6 +15,10 @@ import java.util.Objects;
  *   <li>sim : lineMsisdn, simReason, sim.</li>
  * </ul>
  * Contrat (sauf options) : contractRef issu de POST /contracts et contractSigned.
+ * <p>
+ * {@code offer} et {@code selectedOptions} sont les objets complets du catalogue correspondant à {@code offerId}
+ * et {@code options} (pour une modification d'options : l'offre actuelle de la ligne). Ils sont remplis par le
+ * serveur à la validation ; les valeurs éventuellement envoyées par le front sont ignorées.
  */
 public class OrderRequest {
     private Flow flow;
@@ -25,6 +29,10 @@ public class OrderRequest {
     private NumberChoice number;
     private String offerId;
     private List<String> options;
+    /** Offre complète du catalogue (remplie par le serveur). */
+    private Offer offer;
+    /** Options actives (incluses et choisies), complètes, dans l'ordre du catalogue (remplies par le serveur). */
+    private List<OfferOption> selectedOptions;
     private String openMlSponsor;
     private SimChoice sim;
     private TerminalChoice terminal;
@@ -122,6 +130,22 @@ public class OrderRequest {
         this.options = options;
     }
 
+    public Offer getOffer() {
+        return offer;
+    }
+
+    public void setOffer(final Offer offer) {
+        this.offer = offer;
+    }
+
+    public List<OfferOption> getSelectedOptions() {
+        return selectedOptions;
+    }
+
+    public void setSelectedOptions(final List<OfferOption> selectedOptions) {
+        this.selectedOptions = selectedOptions;
+    }
+
     public String getOpenMlSponsor() {
         return openMlSponsor;
     }
@@ -203,16 +227,16 @@ public class OrderRequest {
     @Override
     public boolean equals(final Object o) {
         return this == o || o instanceof final OrderRequest that
-                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(sepaMandateRef, that.sepaMandateRef) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
+                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(offer, that.offer) && Objects.equals(selectedOptions, that.selectedOptions) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(sepaMandateRef, that.sepaMandateRef) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, openMlSponsor, sim, terminal, sepaMandateRef, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
+        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, offer, selectedOptions, openMlSponsor, sim, terminal, sepaMandateRef, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
     }
 
     @Override
     public String toString() {
-        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "openMlSponsor=" + openMlSponsor + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "sepaMandateRef=" + sepaMandateRef + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
+        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "offer=" + (offer == null ? null : offer.getId()) + ", " + "selectedOptions=" + (selectedOptions == null ? null : selectedOptions.stream().map(OfferOption::getId).toList()) + ", " + "openMlSponsor=" + openMlSponsor + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "sepaMandateRef=" + sepaMandateRef + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
     }
 }

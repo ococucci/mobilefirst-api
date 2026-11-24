@@ -142,6 +142,9 @@ public class OrderService {
         if (isBlank(r.getCustomerId())) {
             new Validation().check(true, "customerId", "Le client est obligatoire.").throwIfInvalid();
         }
+        // Offre et options complètes : uniquement celles du catalogue, jamais celles envoyées par le front.
+        r.setOffer(null);
+        r.setSelectedOptions(null);
         final var customer = customers.byId(r.getCustomerId());
         if (customer.getScore() == Score.rouge) {
             throw ApiException.rule("Score Préventel rouge : aucune vente possible.");
@@ -157,6 +160,8 @@ public class OrderService {
             confirmation(r, v);
         }
         v.throwIfInvalid();
+        r.setOffer(checked.offer());
+        r.setSelectedOptions(checked.offer() == null ? null : Rules.selectedOptions(checked.offer(), r.getOptionsOrEmpty()));
         return checked;
     }
 
