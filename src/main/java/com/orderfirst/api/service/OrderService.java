@@ -21,6 +21,7 @@ import com.orderfirst.api.domain.ReferenceData;
 import com.orderfirst.api.domain.ApiException;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.domain.Validation;
+import com.orderfirst.api.port.CountryPort;
 import com.orderfirst.api.port.DocumentPort;
 import com.orderfirst.api.port.ImlPort;
 import com.orderfirst.api.port.ManagePaymentPort;
@@ -63,13 +64,15 @@ public class OrderService {
     private final OrderEventPublisher bus;
     private final ManagePaymentPort payments;
     private final Clock clock;
+    private final CountryPort countries;
     /** Montant dû en caisse par commande, pour contrôler l'encaissement. */
     private final Map<String, Double> cashDueByOrder = new ConcurrentHashMap<>();
 
     public OrderService(final CustomerService customers, final CatalogService catalog, final RhocPort rhoc,
                         final RessourcePort ressource, final ScoringPort scoring, final SiFinancierPort siFinancier,
                         final ImlPort iml, final DocumentPort documents, final OrderPort orders,
-                        final OrderEventPublisher bus, final ManagePaymentPort payments, final Clock clock) {
+                        final OrderEventPublisher bus, final ManagePaymentPort payments, final Clock clock,
+                        final CountryPort countries) {
         this.customers = customers;
         this.catalog = catalog;
         this.rhoc = rhoc;
@@ -82,6 +85,7 @@ public class OrderService {
         this.bus = bus;
         this.payments = payments;
         this.clock = clock;
+        this.countries = countries;
     }
 
 
@@ -165,7 +169,8 @@ public class OrderService {
             throw ApiException.rule("Client entreprise : seuls les actes de gestion sur un client existant sont autorisés.");
         }
         Rules.withTerritoire(r.getBillingAddress());
-        v.identity("holder", r.getHolder(), true, today()).address("billingAddress", r.getBillingAddress());
+        v.identity("holder", r.getHolder(), true, today()).address("billingAddress", r.getBillingAddress())
+                .country("holder.nationalite", r.getHolder() == null ? null : r.getHolder().getNationalite(), countries::exists);
         number(r.getNumber(), v);
         final var offer = offer(r.getOfferId(), customer.getScore(), v);
         checkOptions(r, offer, v);

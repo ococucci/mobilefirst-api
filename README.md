@@ -46,6 +46,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `POST /customers/{id}/lines/{msisdn}/rescoring` | Re-scoring d'une ligne Card avant changement de forfait | api-scoring |
 | `GET /catalog/offers?territoire=` | Forfaits vendables sur le territoire de l'adresse du client (toutes les offres sans `territoire`), avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
 | `GET /catalog/sim-reasons`, `GET /catalog/donor-operators` | Listes de référence | — |
+| `GET /catalog/countries` | Pays (`id`, `label`) pour la nationalité d'origine ; `identity.nationalite` contient l'`id` du pays | Référentiel des pays (bouchon : codes ISO 3166-1 alpha-2) |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
 | `POST /open-ml/sponsor-checks` | Recherche du sponsor Open ML par N° de mobile ou ND : nom, prénom et `tokenId` (jeton RHOC) | api RHOC |
 | `GET /hardware/terminals` | Modèles de terminaux : marque, modèle, prix par niveau d'offre, couleurs | Enabler si-financier |

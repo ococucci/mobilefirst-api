@@ -1,8 +1,10 @@
 package com.orderfirst.api.web;
 
+import com.orderfirst.api.model.Country;
 import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.model.SimReason;
 import com.orderfirst.api.domain.ReferenceData;
+import com.orderfirst.api.port.CountryPort;
 import com.orderfirst.api.port.RessourcePort;
 import com.orderfirst.api.port.RhocPort;
 import com.orderfirst.api.service.CatalogService;
@@ -25,11 +27,13 @@ public class CatalogController {
     private final CatalogService catalog;
     private final RessourcePort ressource;
     private final RhocPort rhoc;
+    private final CountryPort countries;
 
-    public CatalogController(final CatalogService catalog, final RessourcePort ressource, final RhocPort rhoc) {
+    public CatalogController(final CatalogService catalog, final RessourcePort ressource, final RhocPort rhoc, final CountryPort countries) {
         this.catalog = catalog;
         this.ressource = ressource;
         this.rhoc = rhoc;
+        this.countries = countries;
     }
 
     @Operation(summary = "Forfaits avec, pour chacun, ses options, sa remise (appliquée automatiquement, une seule par offre) et l'éligibilité Open ML "
@@ -45,6 +49,12 @@ public class CatalogController {
     @GetMapping("/catalog/sim-reasons")
     public List<SimReason> simReasons() {
         return ReferenceData.simReasons();
+    }
+
+    @Operation(summary = "Pays (id, libellé) proposés pour la nationalité d'origine du client, triés par libellé")
+    @GetMapping("/catalog/countries")
+    public List<Country> countries() {
+        return countries.countries();
     }
 
     @Operation(summary = "Opérateurs donneurs pour la portabilité")

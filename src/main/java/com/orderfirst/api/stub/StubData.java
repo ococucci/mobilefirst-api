@@ -1,5 +1,6 @@
 package com.orderfirst.api.stub;
 
+import com.orderfirst.api.model.Country;
 import com.orderfirst.api.model.Address;
 import com.orderfirst.api.model.AddressSuggestion;
 import com.orderfirst.api.model.Company;
@@ -32,7 +33,7 @@ final class StubData {
     static List<Customer> customers() {
         return List.of(
                 new Customer("CL-000101", CustomerType.GP,
-                        new Identity("Mme", "Dupont", "Marie", "1988-03-14", "971 · Guadeloupe", "Française",
+                        new Identity("Mme", "Dupont", "Marie", "1988-03-14", "971 · Guadeloupe", "FR",
                                 PieceType.CNI, "12AB34567", "0690123456", "marie.dupont@exemple.fr"),
                         null,
                         new Address("12", "rue des Flamboyants", "97100", "Basse-Terre", "GUADELOUPE", "Résidence Les Palmiers, bât. B"),
@@ -43,7 +44,7 @@ final class StubData {
                                 new Line("0690550124", "pp-classique", "Card prépayée", null, true, SimType.physique, List.of()),
                                 new Line("0690550125", "nb-10", "Forfait 10 Go", 9.99, false, SimType.physique, List.of()))),
                 new Customer("CL-000102", CustomerType.GP,
-                        new Identity("M.", "Martin", "Jean", "1975-07-02", "972 · Martinique", "Française",
+                        new Identity("M.", "Martin", "Jean", "1975-07-02", "972 · Martinique", "FR",
                                 PieceType.PASSEPORT, "19FR55120", "0696778899", "jean.martin@exemple.fr"),
                         null,
                         new Address("4", "avenue des Caraïbes", "97200", "Fort-de-France", "MARTINIQUE", ""),
@@ -57,7 +58,7 @@ final class StubData {
                         Score.rouge,
                         List.of(new Line("0694999000", "nb-10", "Forfait 10 Go", 9.99, false, SimType.physique, List.of()))),
                 new Customer("CL-000201", CustomerType.PRO,
-                        new Identity("Mme", "Lebon", "Sophie", "1982-05-09", "971 · Guadeloupe", "Française",
+                        new Identity("Mme", "Lebon", "Sophie", "1982-05-09", "971 · Guadeloupe", "FR",
                                 PieceType.CNI, "45GH78901", "0690400500", "contact@boulangerie-des-iles.fr"),
                         new Company("Boulangerie des Îles", "812345678", "81234567800015"),
                         new Address("25", "boulevard Légitimus", "97110", "Pointe-à-Pitre", "GUADELOUPE", ""),
@@ -135,6 +136,28 @@ final class StubData {
             "bl-120", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
             "nb-100", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
             "home-5g", new Promo("promo-5e-12m", "−5 € / 12 mois", 5, 12));
+
+    /** Pays du référentiel (identifiant ISO 3166-1 alpha-2, libellé). */
+    static final List<Country> COUNTRIES = List.of(
+            new Country("FR", "France"), new Country("DZ", "Algérie"), new Country("DE", "Allemagne"),
+            new Country("AG", "Antigua-et-Barbuda"), new Country("AR", "Argentine"), new Country("BS", "Bahamas"),
+            new Country("BB", "Barbade"), new Country("BE", "Belgique"), new Country("BJ", "Bénin"),
+            new Country("BR", "Brésil"), new Country("CM", "Cameroun"), new Country("CA", "Canada"),
+            new Country("CN", "Chine"), new Country("CO", "Colombie"), new Country("CG", "Congo"),
+            new Country("CD", "Congo (Rép. dém.)"), new Country("CI", "Côte d'Ivoire"), new Country("CU", "Cuba"),
+            new Country("DM", "Dominique"), new Country("EG", "Égypte"), new Country("ES", "Espagne"),
+            new Country("US", "États-Unis"), new Country("GA", "Gabon"), new Country("GB", "Royaume-Uni"),
+            new Country("GD", "Grenade"), new Country("GN", "Guinée"), new Country("GY", "Guyana"),
+            new Country("HT", "Haïti"), new Country("IN", "Inde"), new Country("IT", "Italie"),
+            new Country("JM", "Jamaïque"), new Country("LB", "Liban"), new Country("LU", "Luxembourg"),
+            new Country("MG", "Madagascar"), new Country("ML", "Mali"), new Country("MA", "Maroc"),
+            new Country("MU", "Maurice"), new Country("MX", "Mexique"), new Country("NL", "Pays-Bas"),
+            new Country("PE", "Pérou"), new Country("PL", "Pologne"), new Country("PT", "Portugal"),
+            new Country("DO", "République dominicaine"), new Country("RO", "Roumanie"), new Country("KN", "Saint-Christophe-et-Niévès"),
+            new Country("LC", "Sainte-Lucie"), new Country("VC", "Saint-Vincent-et-les-Grenadines"), new Country("SN", "Sénégal"),
+            new Country("CH", "Suisse"), new Country("SR", "Suriname"), new Country("SY", "Syrie"),
+            new Country("TT", "Trinité-et-Tobago"), new Country("TN", "Tunisie"), new Country("TR", "Turquie"),
+            new Country("UA", "Ukraine"), new Country("VE", "Venezuela"), new Country("VN", "Viêt Nam"));
 
     /** Sponsors Open ML reconnus par api RHOC (N° de mobile ou ND -> nom, prénom). */
     static final Map<String, List<String>> SPONSORS = Map.of(

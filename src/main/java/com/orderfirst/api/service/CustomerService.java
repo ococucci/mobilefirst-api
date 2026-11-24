@@ -10,6 +10,7 @@ import com.orderfirst.api.model.Score;
 import com.orderfirst.api.domain.ApiException;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.domain.Validation;
+import com.orderfirst.api.port.CountryPort;
 import com.orderfirst.api.port.OrderPort;
 import com.orderfirst.api.port.PartyPort;
 import com.orderfirst.api.port.ScoringPort;
@@ -27,12 +28,15 @@ public class CustomerService {
     private final ScoringPort scoring;
     private final OrderPort orders;
     private final Clock clock;
+    private final CountryPort countries;
 
-    public CustomerService(final PartyPort party, final ScoringPort scoring, final OrderPort orders, final Clock clock) {
+    public CustomerService(final PartyPort party, final ScoringPort scoring, final OrderPort orders, final Clock clock,
+                           final CountryPort countries) {
         this.party = party;
         this.scoring = scoring;
         this.orders = orders;
         this.clock = clock;
+        this.countries = countries;
     }
 
     /** Recherche par MSISDN ; vide si le numéro est inconnu (le front passe alors à la saisie de l'identité). */
@@ -60,7 +64,8 @@ public class CustomerService {
 
     /** Contrôle Préventel puis création du client ; pas de création si le score est rouge. */
     public CustomerCreation create(final Identity identity, final Address address) {
-        new Validation().identity("identity", identity, false, today()).throwIfInvalid();
+        new Validation().identity("identity", identity, false, today())
+                .country("identity.nationalite", identity == null ? null : identity.getNationalite(), countries::exists).throwIfInvalid();
         final var score = scoring.preventel(identity);
         if (score == Score.rouge) {
             return new CustomerCreation(score, null);
@@ -75,7 +80,8 @@ public class CustomerService {
      */
     public CustomerUpdate update(final String id, final Identity identity, final Address address) {
         final var current = byId(id);
-        new Validation().identity("identity", identity, true, today()).address("address", address).throwIfInvalid();
+        new Validation().identity("identity", identity, true, today()).address("address", address)
+                .country("identity.nationalite", identity == null ? null : identity.getNationalite(), countries::exists).throwIfInvalid();
         final boolean rescore = Rules.identityChangeRequiresRescore(current.getIdentity(), identity);
         final var score = rescore ? scoring.preventel(identity) : current.getScore();
         if (score == Score.rouge) {

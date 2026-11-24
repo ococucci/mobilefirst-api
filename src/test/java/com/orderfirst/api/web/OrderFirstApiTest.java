@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class OrderFirstApiTest {
     private static final String MARIE = """
             {"civilite":"Mme","nom":"Dupont","prenom":"Marie","dateNaissance":"1988-03-14",
-             "departementNaissance":"971 · Guadeloupe","nationalite":"Française","pieceType":"CNI",
+             "departementNaissance":"971 · Guadeloupe","nationalite":"FR","pieceType":"CNI",
              "pieceNumero":"12AB34567","mobileContact":"0690123456","email":"marie.dupont@exemple.fr"}""";
     private static final String ADDRESS = """
             {"numeroVoie":"12","nomVoie":"rue des Flamboyants","codePostal":"97100","commune":"Basse-Terre","territoire":"GUADELOUPE","complement":""}""";
@@ -147,6 +147,28 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.id").value("CL-000101"));
         send("/api/v1/customers/existence-checks", "{\"identity\":" + MARIE.replace("Dupont", "Durand") + "}")
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void countriesForNationality() throws Exception {
+        mvc.perform(get("/api/v1/catalog/countries"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == 'FR')].label").value(hasItem("France")))
+                .andExpect(jsonPath("$[0].label").value("Algérie"))   // triés par libellé
+                .andExpect(jsonPath("$[*].id").value(hasItem("HT")));
+        // La nationalité est l'identifiant d'un pays de la liste ; elle reste facultative.
+        mvc.perform(put("/api/v1/customers/CL-000101").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identity\":" + MARIE.replace("\"FR\"", "\"Française\"") + ",\"address\":" + ADDRESS + "}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("identity.nationalite"))
+                .andExpect(jsonPath("$.errors[0].message").value("Choisissez un pays dans la liste."));
+        mvc.perform(put("/api/v1/customers/CL-000101").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identity\":" + MARIE.replace("\"FR\"", "\"\"") + ",\"address\":" + ADDRESS + "}"))
+                .andExpect(status().isOk());
+        send("/api/v1/customers", """
+                {"identity":{"civilite":"M.","nom":"Nouveau","prenom":"Test","dateNaissance":"1990-01-01","nationalite":"XX","pieceType":"CNI","pieceNumero":"AB1234567"}}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("identity.nationalite"));
     }
 
     @Test

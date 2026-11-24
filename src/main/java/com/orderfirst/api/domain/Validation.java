@@ -64,7 +64,7 @@ public final class Validation {
             check(!Rules.isValidPieceNumber(i.getPieceNumero()), prefix + ".pieceNumero", "N° invalide : 9 ou 12 lettres et chiffres.");
         }
         if (full) {
-            // Département de naissance et nationalité : facultatifs, en saisie libre.
+            // Département de naissance (saisie libre) et nationalité (voir country) : facultatifs.
             if (isBlank(i.getMobileContact())) {
                 check(true, prefix + ".mobileContact", "Le mobile de contact est obligatoire.");
             } else {
@@ -91,5 +91,11 @@ public final class Validation {
         } catch (final RuntimeException e) {
             return null;
         }
+    }
+
+    /** Nationalité facultative ; si elle est renseignée, ce doit être l'identifiant d'un pays de la liste. */
+    public Validation country(final String field, final String countryId, final java.util.function.Predicate<String> known) {
+        check(!isBlank(countryId) && !known.test(countryId), field, "Choisissez un pays dans la liste.");
+        return this;
     }
 }
