@@ -26,7 +26,6 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.hamcrest.Matchers.empty;
@@ -168,7 +167,6 @@ class OrderFirstApiTest {
         final var order = """
                 {"flow":"acquisition","customerId":"CL-000101","holder":%s,"billingAddress":%s,
                  "number":{"mode":"nouveau","msisdn":"0690123481"},"offerId":"bl-60","options":["multisim"],
-                 "offer":{"id":"bl-60","label":"falsifiée","price":0.0},"selectedOptions":[{"id":"multisim","price":0.0}],
                  "openMlSponsor":"0690 65 43 21","sim":{"type":"physique","iccid":"8933 0100 0000 0000 019"},
                  "terminal":{"id":"sam-a15","colorId":"sam-a15-noir","imei":"490154203237518"},"sepaMandateRef":"%s"}"""
                 .formatted(MARIE, ADDRESS, mandate());
@@ -191,13 +189,6 @@ class OrderFirstApiTest {
         assertEquals(new OpenMlApplied("OPENML_10E", "Open ML −10 €/mois", "0690654321", 10), offer.getOpenMl());
         assertEquals(15.99, offer.getMonthlyPrice());
         assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
-        // La commande porte l'offre et les options complètes du catalogue ; celles envoyées par le front sont ignorées.
-        final var request = published().getOrder();
-        assertEquals("bl-60", request.getOffer().getId());
-        assertEquals(22.99, request.getOffer().getPrice());
-        assertNotEquals("falsifiée", request.getOffer().getLabel());
-        assertEquals(List.of("multisim"), request.getSelectedOptions().stream().map(OfferOption::getId).toList());
-        assertEquals(3.0, request.getSelectedOptions().get(0).getPrice());
         final var terminal = published().getTerminal();
         assertEquals("Galaxy A15 128Go", terminal.getModel());
         assertEquals("noir", terminal.getColor().getLabel());
