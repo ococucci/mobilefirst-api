@@ -47,7 +47,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `GET /catalog/offers?territoire=` | Forfaits vendables sur le territoire de l'adresse du client (toutes les offres sans `territoire`), avec pour chacun son niveau, ses options (et leurs incompatibilités), sa remise et l'éligibilité Open ML | Catalogue Castor, api-promo advice |
 | `GET /catalog/sim-reasons`, `GET /catalog/donor-operators` | Listes de référence | — |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
-| `POST /open-ml/sponsor-checks` | Validation du N° sponsor Open ML | api RHOC |
+| `POST /open-ml/sponsor-checks` | Recherche du sponsor Open ML par N° de mobile ou ND : nom, prénom et `tokenId` (jeton RHOC) | api RHOC |
 | `GET /hardware/terminals` | Modèles de terminaux : marque, modèle, prix par niveau d'offre, couleurs | Enabler si-financier |
 | `POST /hardware/iccid-checks` | Contrôle de l'ICCID (`ok`, `format`, `inconnu`) | Enabler si-financier |
 | `POST /hardware/sim-scans` | Lecture simulée du code-barres d'une SIM | Enabler si-financier |
@@ -64,8 +64,8 @@ Le même corps sert à générer le contrat puis à valider la commande. Les cha
 
 | `flow` | Champs |
 | --- | --- |
-| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `sepaMandateRef` |
-| `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor` |
+| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `sepaMandateRef` |
+| `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted` |
 | `options` | `lineMsisdn`, `options` (liste complète souhaitée : le serveur calcule ajouts et retraits) |
 | `sim` | `lineMsisdn`, `simReason`, `sim` |
 
@@ -125,7 +125,8 @@ saisie (`order`), le message recopie ce qui a été vendu, avec libellés et pri
   "id": "bl-60", "label": "Forfait bloqué 60 Go", "price": 22.99,
   "options": [ { "id": "europe", "label": "Option Europe 10 Go", "price": 5.0, "included": false } ],
   "promo": { "id": "promo-10e-6m", "label": "−10 € / 6 mois", "monthlyDiscount": 10.0, "durationMonths": 6 },
-  "openMl": { "id": "OPENML_10E", "label": "Open ML −10 €/mois", "sponsor": "0690654321", "monthlyDiscount": 10.0 },
+  "openMl": { "id": "OPENML_10E", "label": "Open ML −10 €/mois", "sponsor": "0690654321", "sponsorLastName": "MARTIN",
+              "sponsorFirstName": "JULIEN", "tokenId": "RHOC-5f0c…", "monthlyDiscount": 10.0 },
   "monthlyPrice": 17.99,
   "monthlyPriceDuringPromo": 7.99
 }
@@ -152,6 +153,6 @@ beans activés par une autre valeur de `orderfirst.integrations`. Les services e
 
 Identique au front : `06 90 12 34 56` (Mme Marie Dupont, score vert, 4 lignes dont une Card et une avec
 commande en cours), `06 96 77 88 99` (score orange, ligne Card), `06 94 99 90 00` (score rouge),
-`06 90 40 05 00` (client entreprise). Préventel renvoie rouge ou orange si le nom contient ce mot. Sponsor Open ML
-`0690654321`, ICCID en stock `8933010000000000001` à `…043`, IBAN `FR76 3000 6000 0112 3456 7890 189`,
+`06 90 40 05 00` (client entreprise). Préventel renvoie rouge ou orange si le nom contient ce mot. Sponsors Open ML
+`0690654321` (MARTIN JULIEN), `0696112233` et le ND `0590240254`, aussi au format international (590…), ICCID en stock `8933010000000000001` à `…043`, IBAN `FR76 3000 6000 0112 3456 7890 189`,
 IMEI `490154203237518`.

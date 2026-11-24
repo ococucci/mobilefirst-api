@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -162,14 +163,54 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.customer.identity.nom").value("Dupont"));
     }
 
+    private String sponsorToken(final String sponsor) throws Exception {
+        final var body = send("/api/v1/open-ml/sponsor-checks", "{\"sponsor\":\"" + sponsor + "\"}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valid").value(true))
+                .andReturn().getResponse().getContentAsString();
+        return body.replaceAll(".*\"tokenId\":\"([^\"]+)\".*", "$1");
+    }
+
+    @Test
+    void sponsorSearch() throws Exception {
+        // N° international ou national : RHOC renvoie le nom, le prénom et un nouveau jeton à chaque recherche.
+        send("/api/v1/open-ml/sponsor-checks", "{\"sponsor\":\"590690654321\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(true))
+                .andExpect(jsonPath("$.msisdn").value("0690654321"))
+                .andExpect(jsonPath("$.lastName").value("MARTIN"))
+                .andExpect(jsonPath("$.firstName").value("JULIEN"))
+                .andExpect(jsonPath("$.tokenId").value(startsWith("RHOC-")));
+        send("/api/v1/open-ml/sponsor-checks", "{\"sponsor\":\"0590 24 02 54\"}")
+                .andExpect(jsonPath("$.lastName").value("ROSEMOND"));
+        send("/api/v1/open-ml/sponsor-checks", "{\"sponsor\":\"0690000000\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(false))
+                .andExpect(jsonPath("$.tokenId").doesNotExist());
+    }
+
+    @Test
+    void openMlRequiresTokenAndConditions() throws Exception {
+        final var order = """
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","openMlSponsor":"0690654321"}""";
+        send("/api/v1/contracts", order).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("openMlSponsor", "openMlConditionsAccepted")));
+        final var withToken = order.replace("}", ",\"openMlTokenId\":\"%s\"}".formatted(sponsorToken("0690654321")));
+        send("/api/v1/contracts", withToken).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(contains("openMlConditionsAccepted")))
+                .andExpect(jsonPath("$.errors[0].message").value("Le client doit accepter les 3 conditions (ou être titulaire de la ligne du sponsor)."));
+        send("/api/v1/contracts", withToken.replace("}", ",\"openMlConditionsAccepted\":true}")).andExpect(status().isCreated());
+    }
+
     @Test
     void acquisitionWithTerminalAndOpenMl() throws Exception {
+        final var token = sponsorToken("0690 65 43 21");
         final var order = """
                 {"flow":"acquisition","customerId":"CL-000101","holder":%s,"billingAddress":%s,
                  "number":{"mode":"nouveau","msisdn":"0690123481"},"offerId":"bl-60","options":["multisim"],
-                 "openMlSponsor":"0690 65 43 21","sim":{"type":"physique","iccid":"8933 0100 0000 0000 019"},
+                 "openMlSponsor":"0690 65 43 21","openMlTokenId":"%s","openMlConditionsAccepted":true,
+                 "sim":{"type":"physique","iccid":"8933 0100 0000 0000 019"},
                  "terminal":{"id":"sam-a15","colorId":"sam-a15-noir","imei":"490154203237518"},"sepaMandateRef":"%s"}"""
-                .formatted(MARIE, ADDRESS, mandate());
+                .formatted(MARIE, ADDRESS, token, mandate());
         final var contractRef = contract(order);
         mvc.perform(get("/api/v1/contracts/" + contractRef))
                 .andExpect(status().isOk())
@@ -186,7 +227,9 @@ class OrderFirstApiTest {
         assertEquals("bl-60", offer.getId());
         assertEquals(List.of("multisim"), offer.getOptions().stream().map(OfferOption::getId).toList());
         assertEquals("promo-10e-6m", offer.getPromo().getId());
-        assertEquals(new OpenMlApplied("OPENML_10E", "Open ML −10 €/mois", "0690654321", 10), offer.getOpenMl());
+        // Sponsor (nom et prénom selon RHOC) et jeton de la vérification conservés avec la commande.
+        assertEquals(new OpenMlApplied("OPENML_10E", "Open ML −10 €/mois", "0690654321", "MARTIN", "JULIEN", token, 10), offer.getOpenMl());
+        assertEquals(token, published().getOrder().getOpenMlTokenId());
         assertEquals(15.99, offer.getMonthlyPrice());
         assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
         final var terminal = published().getTerminal();

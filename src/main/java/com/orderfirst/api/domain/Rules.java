@@ -33,6 +33,21 @@ public final class Rules {
         return value == null ? "" : value.replaceAll("\\D", "");
     }
 
+    /**
+     * N° au format national (10 chiffres commençant par 0) : 590690123456 ou +590 690 12 34 56 -> 0690123456,
+     * 33612345678 -> 0612345678. Un autre format est renvoyé sans les caractères non numériques.
+     */
+    public static String nationalNumber(final String value) {
+        final var d = digits(value);
+        if (d.length() == 12 && (d.startsWith("590") || d.startsWith("596") || d.startsWith("594") || d.startsWith("262"))) {
+            return "0" + d.substring(3);
+        }
+        if (d.length() == 11 && d.startsWith("33")) {
+            return "0" + d.substring(2);
+        }
+        return d;
+    }
+
     public static String compact(final String value) {
         return value == null ? "" : value.replaceAll("[\\s.-]", "").toUpperCase(Locale.ROOT);
     }

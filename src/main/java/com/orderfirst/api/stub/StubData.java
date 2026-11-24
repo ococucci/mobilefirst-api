@@ -136,8 +136,11 @@ final class StubData {
             "nb-100", new Promo("promo-10e-6m", "−10 € / 6 mois", 10, 6),
             "home-5g", new Promo("promo-5e-12m", "−5 € / 12 mois", 5, 12));
 
-    /** N° sponsor Open ML reconnus par api RHOC. */
-    static final List<String> SPONSORS = List.of("0690654321", "0696112233");
+    /** Sponsors Open ML reconnus par api RHOC (N° de mobile ou ND -> nom, prénom). */
+    static final Map<String, List<String>> SPONSORS = Map.of(
+            "0690654321", List.of("MARTIN", "JULIEN"),
+            "0696112233", List.of("LOUISON", "CHANTAL"),
+            "0590240254", List.of("ROSEMOND", "PATRICE"));
 
     static final List<String> AVAILABLE_NUMBERS = List.of("0690123480", "0690123481", "0690123482", "0690123499", "0691245566");
 

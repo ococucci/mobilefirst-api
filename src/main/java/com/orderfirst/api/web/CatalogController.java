@@ -62,12 +62,18 @@ public class CatalogController {
     public record SponsorCheck(String sponsor) {
     }
 
-    public record SponsorResult(boolean valid) {
+    /**
+     * Résultat de la recherche du sponsor : s'il est reconnu, son N° (format national), son nom, son prénom et
+     * l'identifiant du jeton RHOC à renvoyer avec la commande (openMlTokenId).
+     */
+    public record SponsorResult(boolean valid, String msisdn, String lastName, String firstName, String tokenId) {
     }
 
-    @Operation(summary = "Validation du N° sponsor Open ML (api RHOC)")
+    @Operation(summary = "Recherche du sponsor Open ML par N° de mobile ou ND (api RHOC)")
     @PostMapping("/open-ml/sponsor-checks")
     public SponsorResult checkSponsor(@RequestBody final SponsorCheck request) {
-        return new SponsorResult(rhoc.isValidSponsor(request.sponsor()));
+        return rhoc.sponsor(request.sponsor())
+                .map(s -> new SponsorResult(true, s.msisdn(), s.lastName(), s.firstName(), s.tokenId()))
+                .orElseGet(() -> new SponsorResult(false, null, null, null, null));
     }
 }

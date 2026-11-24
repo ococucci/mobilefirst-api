@@ -41,6 +41,16 @@ class RulesTest {
     }
 
     @Test
+    void nationalNumber() {
+        assertEquals("0690654321", Rules.nationalNumber("590690654321"));
+        assertEquals("0590240254", Rules.nationalNumber("+590 590 24 02 54"));
+        assertEquals("0696112233", Rules.nationalNumber("596696112233"));
+        assertEquals("0612345678", Rules.nationalNumber("33612345678"));
+        assertEquals("0690654321", Rules.nationalNumber("06 90 65 43 21"));
+        assertEquals("", Rules.nationalNumber(null));
+    }
+
+    @Test
     void incompatibleOptionsExcludeEachOtherBothWays() {
         // c est incompatible avec a (déclaré sur c seulement) ; d est incompatible avec l'option incluse.
         final var offer = new Offer("o", FamilyId.bloque, OfferLevel.silver, "Offre", "", 20, OpenMl.of("OPENML", "Open ML", 10), List.of(

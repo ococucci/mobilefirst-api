@@ -74,8 +74,9 @@ public class ContractService {
         }
         if (c.offer() != null) {
             final var options = Rules.selectedOptions(c.offer(), r.getOptionsOrEmpty());
-            final boolean openMl = !Rules.isBlank(r.getOpenMlSponsor()) && Rules.isOpenMlAvailable(c.offer(), c.line())
-                    && rhoc.isValidSponsor(r.getOpenMlSponsor());
+            final var sponsor = Rules.isBlank(r.getOpenMlSponsor()) || !Rules.isOpenMlAvailable(c.offer(), c.line())
+                    ? null : rhoc.sponsor(r.getOpenMlSponsor()).orElse(null);
+            final boolean openMl = sponsor != null;
             if (c.line() != null) {
                 lines.add("Offre actuelle : " + c.line().getOfferLabel());
             }
@@ -92,6 +93,7 @@ public class ContractService {
                 final var label = c.offer().getOpenMl().getLabel();
                 lines.add("Remise Open ML : -" + euro(Rules.openMlDiscount(c.offer())) + "/mois, à vie"
                         + (Rules.isBlank(label) ? "" : " (" + label + ")"));
+                lines.add("Sponsor : " + sponsor.lastName() + " " + sponsor.firstName() + " - " + sponsor.msisdn());
             }
             final double monthly = Rules.monthly(c.offer(), r.getOptionsOrEmpty(), openMl);
             if (!Rules.hasOneOffPrice(c.offer()) || monthly > 0) {

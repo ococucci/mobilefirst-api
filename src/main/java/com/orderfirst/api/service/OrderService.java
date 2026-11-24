@@ -325,7 +325,14 @@ public class OrderService {
             v.check(offer != null, "openMlSponsor", "Remise Open ML indisponible pour la Carte Prépayée et pour une ligne Card.");
             return;
         }
-        v.check(!rhoc.isValidSponsor(r.getOpenMlSponsor()), "openMlSponsor", "Sponsor non reconnu par api RHOC.");
+        final var sponsor = rhoc.sponsor(r.getOpenMlSponsor());
+        if (sponsor.isEmpty()) {
+            v.check(true, "openMlSponsor", "Sponsor non reconnu par api RHOC.");
+            return;
+        }
+        v.check(isBlank(r.getOpenMlTokenId()), "openMlSponsor", "Recherchez le sponsor (api RHOC) avant de continuer.");
+        v.check(!Boolean.TRUE.equals(r.getOpenMlConditionsAccepted()), "openMlConditionsAccepted",
+                "Le client doit accepter les 3 conditions (ou être titulaire de la ligne du sponsor).");
     }
 
     private void checkSim(final OrderRequest r, final Validation v) {
@@ -356,9 +363,15 @@ public class OrderService {
         final boolean openMl = !isBlank(r.getOpenMlSponsor()) && Rules.isOpenMlAvailable(offer, c.line());
         final double monthly = Rules.monthly(offer, r.getOptionsOrEmpty(), openMl);
         return new OfferSnapshot(offer.getId(), offer.getLabel(), offer.getPrice(), Rules.selectedOptions(offer, r.getOptionsOrEmpty()),
-                offer.getPromo(), openMl ? new OpenMlApplied(offer.getOpenMl().getId(), offer.getOpenMl().getLabel(), Rules.digits(r.getOpenMlSponsor()),
-                        Rules.openMlDiscount(offer)) : null,
-                monthly, Rules.monthlyDuringPromo(offer, monthly));
+                offer.getPromo(), openMl ? openMlApplied(r, offer) : null, monthly, Rules.monthlyDuringPromo(offer, monthly));
+    }
+
+    /** Remise Open ML de la commande : nom et prénom du sponsor selon api RHOC, jeton de la vérification faite à l'écran. */
+    private OpenMlApplied openMlApplied(final OrderRequest r, final Offer offer) {
+        final var sponsor = rhoc.sponsor(r.getOpenMlSponsor()).orElse(null);
+        return new OpenMlApplied(offer.getOpenMl().getId(), offer.getOpenMl().getLabel(), Rules.nationalNumber(r.getOpenMlSponsor()),
+                sponsor == null ? null : sponsor.lastName(), sponsor == null ? null : sponsor.firstName(),
+                r.getOpenMlTokenId(), Rules.openMlDiscount(offer));
     }
 
     private OptionsChange optionsChange(final OrderRequest r, final Checked c) {

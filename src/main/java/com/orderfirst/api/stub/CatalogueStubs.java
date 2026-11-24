@@ -2,6 +2,7 @@ package com.orderfirst.api.stub;
 
 import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.model.Promo;
+import com.orderfirst.api.model.Sponsor;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.CataloguePort;
 import com.orderfirst.api.port.PromoAdvicePort;
@@ -11,6 +12,7 @@ import com.orderfirst.api.port.RhocPort;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Bouchons du catalogue : Castor, promo advice, RHOC (Open ML) et ressource (numéros). */
@@ -37,9 +39,13 @@ final class CatalogueStubs {
 
     @Stub
     static class Rhoc implements RhocPort {
+        /** Un nouveau jeton à chaque vérification, comme api RHOC. */
         @Override
-        public boolean isValidSponsor(final String sponsor) {
-            return StubData.SPONSORS.contains(Rules.digits(sponsor));
+        public Optional<Sponsor> sponsor(final String msisdn) {
+            final var national = Rules.nationalNumber(msisdn);
+            final var names = StubData.SPONSORS.get(national);
+            return names == null ? Optional.empty()
+                    : Optional.of(new Sponsor(national, names.get(0), names.get(1), "RHOC-" + UUID.randomUUID()));
         }
     }
 
