@@ -84,13 +84,12 @@ class OrderFirstApiTest {
                 .contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
-    /** Enregistre le mandat SEPA et renvoie les champs de la commande : "sepaMandateRef":"…","ibanToken":{…}. */
+    /** Enregistre le mandat SEPA et renvoie le champ de la commande : "ibanToken":{...}. */
     private String mandate() throws Exception {
         final var body = send("/api/v1/sepa-mandates", """
                 {"holder":"Marie Dupont","iban":"FR76 3000 6000 0112 3456 7890 189"}""")
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
-        final var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
-        return "\"sepaMandateRef\":\"" + json.get("reference").asText() + "\",\"ibanToken\":" + json.get("ibanToken");
+        return "\"ibanToken\":" + body;
     }
 
     private String contract(final String order) throws Exception {
@@ -398,13 +397,13 @@ class OrderFirstApiTest {
         send("/api/v1/sepa-mandates", """
                 {"holder":"Marie Dupont","iban":"FR76 3000 6000 0112 3456 7890 189"}""")
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.reference").value(startsWith("RUM-OOF-0189-")))
-                .andExpect(jsonPath("$.ibanToken.uid").isNotEmpty())
-                .andExpect(jsonPath("$.ibanToken.codeIban").value("FR76"))
-                .andExpect(jsonPath("$.ibanToken.bankIdentifier").value("30006"))
-                .andExpect(jsonPath("$.ibanToken.bankBranchIdentifier").value("00001"))
-                .andExpect(jsonPath("$.ibanToken.accountNumber").value(org.hamcrest.Matchers.matchesPattern("[A-Z]{7}8901")))
-                .andExpect(jsonPath("$.ibanToken.ribCheckDigits").value("89"));
+                .andExpect(jsonPath("$.reference").doesNotExist())
+                .andExpect(jsonPath("$.uid").isNotEmpty())
+                .andExpect(jsonPath("$.codeIban").value("FR76"))
+                .andExpect(jsonPath("$.bankIdentifier").value("30006"))
+                .andExpect(jsonPath("$.bankBranchIdentifier").value("00001"))
+                .andExpect(jsonPath("$.accountNumber").value(org.hamcrest.Matchers.matchesPattern("[A-Z]{7}8901")))
+                .andExpect(jsonPath("$.ribCheckDigits").value("89"));
     }
 
     @Test
@@ -418,10 +417,13 @@ class OrderFirstApiTest {
         send("/api/v1/contracts", order.formatted(MARIE, ADDRESS, fields.replace("\"codeIban\":\"FR76\"", "\"codeIban\":\"FR00\"")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("ibanToken"));
-        send("/api/v1/contracts", order.formatted(MARIE, ADDRESS, fields.replaceAll(",\"ibanToken\":.*$", "")))
+        send("/api/v1/contracts", order.formatted(MARIE, ADDRESS, fields.replace("\"uid\":\"", "\"uid\":\"inconnu-")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("ibanToken"));
-        // La commande créée porte la RUM et l'information bancaire tokenisée.
+        send("/api/v1/contracts", order.formatted(MARIE, ADDRESS, "\"ibanToken\":null"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("ibanToken"));
+        // La commande créée porte l'information bancaire tokenisée.
         final var created = order.formatted(MARIE, ADDRESS, fields);
         send("/api/v1/orders", confirmed(created, contract(created))).andExpect(status().isCreated());
         assertEquals("FR76", published().getOrder().getIbanToken().getCodeIban());
@@ -442,7 +444,7 @@ class OrderFirstApiTest {
                 .andExpect(jsonPath("$.errors[*].field").value(hasItem("offerId")))
                 .andExpect(jsonPath("$.errors[*].field").value(hasItem("sim.iccid")))
                 .andExpect(jsonPath("$.errors[*].field").value(hasItem("terminal.imei")))
-                .andExpect(jsonPath("$.errors[*].field").value(hasItem("sepaMandateRef")));
+                .andExpect(jsonPath("$.errors[*].field").value(hasItem("ibanToken")));
     }
 
     @Test

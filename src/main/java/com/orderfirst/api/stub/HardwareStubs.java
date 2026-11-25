@@ -1,7 +1,6 @@
 package com.orderfirst.api.stub;
 
 import com.orderfirst.api.model.IbanToken;
-import com.orderfirst.api.model.SepaMandate;
 import com.orderfirst.api.model.Terminal;
 import com.orderfirst.api.domain.Rules;
 import com.orderfirst.api.port.ImlPort;
@@ -57,25 +56,23 @@ final class HardwareStubs {
     @Stub
     static class Iml implements ImlPort {
         private static final String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private final Map<String, SepaMandate> mandates = new ConcurrentHashMap<>();
+        private final Map<String, IbanToken> tokens = new ConcurrentHashMap<>();
         private final AtomicInteger sequence = new AtomicInteger(1);
 
         @Override
-        public SepaMandate storeMandate(final String holder, final String iban) {
+        public IbanToken storeMandate(final String holder, final String iban) {
             if (Rules.isBlank(holder) || !Rules.isValidIban(iban)) {
                 throw new IllegalArgumentException("Mandat SEPA refusé : titulaire ou IBAN invalide");
             }
             final var compact = Rules.compact(iban);
-            final int n = sequence.getAndIncrement();
-            final var ref = "RUM-OOF-%s-%04d".formatted(compact.substring(compact.length() - 4), n);
-            final var mandate = new SepaMandate(ref, tokenize(String.valueOf(n), compact));
-            mandates.put(ref, mandate);
-            return mandate;
+            final var token = tokenize(String.valueOf(sequence.getAndIncrement()), compact);
+            tokens.put(token.getUid(), token);
+            return token;
         }
 
         @Override
-        public Optional<SepaMandate> mandate(final String mandateRef) {
-            return mandateRef == null ? Optional.empty() : Optional.ofNullable(mandates.get(mandateRef));
+        public Optional<IbanToken> token(final String uid) {
+            return uid == null ? Optional.empty() : Optional.ofNullable(tokens.get(uid));
         }
 
         /**

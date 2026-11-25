@@ -179,11 +179,14 @@ public class OrderService {
         final var isCard = offer != null && offer.getFamily() == FamilyId.prepaye;
         final var terminal = isCard ? null : terminal(r, offer, v);
         if (!isCard) {
-            final var mandate = iml.mandate(r.getSepaMandateRef());
-            v.check(mandate.isEmpty(), "sepaMandateRef", "Le mandat SEPA doit être enregistré (POST /sepa-mandates).");
-            // Les coordonnées tokenisées de la commande doivent être celles du mandat enregistré par IML.
-            v.check(mandate.isPresent() && !mandate.get().ibanToken().equals(r.getIbanToken()), "ibanToken",
-                    "Les coordonnées bancaires ne correspondent pas au mandat SEPA : enregistrez à nouveau le mandat.");
+            final var token = r.getIbanToken();
+            if (token == null || isBlank(token.getUid())) {
+                v.check(true, "ibanToken", "Le mandat SEPA doit être enregistré (POST /sepa-mandates).");
+            } else {
+                // Les coordonnées tokenisées de la commande doivent être celles enregistrées par IML.
+                v.check(!iml.token(token.getUid()).map(token::equals).orElse(false), "ibanToken",
+                        "Les coordonnées bancaires ne correspondent pas au mandat SEPA : enregistrez à nouveau le mandat.");
+            }
         }
         final var msisdn = r.getNumber() == null ? "" : Rules.digits(
                 r.getNumber().getMode() == NumberMode.portabilite ? r.getNumber().getPortedMsisdn() : r.getNumber().getMsisdn());

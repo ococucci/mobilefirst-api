@@ -52,7 +52,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `GET /hardware/terminals` | Modèles de terminaux : marque, modèle, prix par niveau d'offre, couleurs | Enabler si-financier |
 | `POST /hardware/iccid-checks` | Contrôle de l'ICCID (`ok`, `format`, `inconnu`) | Enabler si-financier |
 | `POST /hardware/sim-scans` | Lecture simulée du code-barres d'une SIM | Enabler si-financier |
-| `POST /sepa-mandates` | Contrôle et stockage du mandat SEPA (signé hors outil) : renvoie la RUM (`reference`) et l'information bancaire tokenisée (`ibanToken` : `uid`, `codeIban`, `bankIdentifier`, `bankBranchIdentifier`, `accountNumber`, `ribCheckDigits`) | api IML |
+| `POST /sepa-mandates` | Contrôle et stockage du mandat SEPA (signé hors outil) : renvoie l'information bancaire tokenisée (`uid`, `codeIban`, `bankIdentifier`, `bankBranchIdentifier`, `accountNumber`, `ribCheckDigits`) | api IML |
 | `GET /addresses?q=` | Complétion d'adresse | Api-ORAS |
 | `POST /contracts` | Génère le contrat de la commande et le stocke (sauf modification d'options) | api EPC, Api-document |
 | `GET /contracts/{documentId}` | Téléchargement du contrat (PDF), 204 si inconnu | Api-document |
@@ -65,7 +65,7 @@ Le même corps sert à générer le contrat puis à valider la commande. Les cha
 
 | `flow` | Champs |
 | --- | --- |
-| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `sepaMandateRef` et `ibanToken` (tels que renvoyés par `POST /sepa-mandates`) |
+| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `ibanToken` (tel que renvoyé par `POST /sepa-mandates`) |
 | `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted` |
 | `options` | `lineMsisdn`, `options` (liste complète souhaitée : le serveur calcule ajouts et retraits) |
 | `sim` | `lineMsisdn`, `simReason`, `sim` |
