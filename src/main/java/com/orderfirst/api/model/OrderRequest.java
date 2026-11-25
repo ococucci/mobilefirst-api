@@ -10,7 +10,7 @@ import java.util.Objects;
  * de la demande ({@code flow}) :
  * <ul>
  *   <li>acquisition : holder, billingAddress, number, offerId, options, openMlSponsor, openMlTokenId,
- *       openMlConditionsAccepted, sim, terminal, sepaMandateRef ;</li>
+ *       openMlConditionsAccepted, sim, terminal, sepaMandateRef, ibanToken ;</li>
  *   <li>forfait : lineMsisdn, offerId, options, openMlSponsor, openMlTokenId, openMlConditionsAccepted ;</li>
  *   <li>options : lineMsisdn, options (liste complète souhaitée, le serveur calcule ajouts et retraits) ;</li>
  *   <li>sim : lineMsisdn, simReason, sim.</li>
@@ -36,6 +36,8 @@ public class OrderRequest {
     private SimChoice sim;
     private TerminalChoice terminal;
     private String sepaMandateRef;
+    /** Information bancaire tokenisée renvoyée avec la RUM par POST /sepa-mandates. */
+    private IbanToken ibanToken;
     private String simReason;
     private String contractRef;
     private Boolean contractSigned;
@@ -177,6 +179,14 @@ public class OrderRequest {
         this.sepaMandateRef = sepaMandateRef;
     }
 
+    public IbanToken getIbanToken() {
+        return ibanToken;
+    }
+
+    public void setIbanToken(final IbanToken ibanToken) {
+        this.ibanToken = ibanToken;
+    }
+
     public String getSimReason() {
         return simReason;
     }
@@ -226,16 +236,16 @@ public class OrderRequest {
     @Override
     public boolean equals(final Object o) {
         return this == o || o instanceof final OrderRequest that
-                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(openMlTokenId, that.openMlTokenId) && Objects.equals(openMlConditionsAccepted, that.openMlConditionsAccepted) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(sepaMandateRef, that.sepaMandateRef) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
+                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(openMlTokenId, that.openMlTokenId) && Objects.equals(openMlConditionsAccepted, that.openMlConditionsAccepted) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(sepaMandateRef, that.sepaMandateRef) && Objects.equals(ibanToken, that.ibanToken) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, openMlSponsor, openMlTokenId, openMlConditionsAccepted, sim, terminal, sepaMandateRef, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
+        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, openMlSponsor, openMlTokenId, openMlConditionsAccepted, sim, terminal, sepaMandateRef, ibanToken, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
     }
 
     @Override
     public String toString() {
-        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "openMlSponsor=" + openMlSponsor + ", " + "openMlTokenId=" + openMlTokenId + ", " + "openMlConditionsAccepted=" + openMlConditionsAccepted + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "sepaMandateRef=" + sepaMandateRef + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
+        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "openMlSponsor=" + openMlSponsor + ", " + "openMlTokenId=" + openMlTokenId + ", " + "openMlConditionsAccepted=" + openMlConditionsAccepted + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "sepaMandateRef=" + sepaMandateRef + ", " + "ibanToken=" + ibanToken + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
     }
 }

@@ -1,5 +1,6 @@
 package com.orderfirst.api.web;
 
+import com.orderfirst.api.model.SepaMandate;
 import com.orderfirst.api.model.AddressSuggestion;
 import com.orderfirst.api.model.Terminal;
 import com.orderfirst.api.domain.Rules;
@@ -62,13 +63,10 @@ public class HardwareController {
     public record MandateRequest(String holder, String iban) {
     }
 
-    public record MandateResponse(String reference) {
-    }
-
-    @Operation(summary = "Contrôle et stockage du mandat SEPA (api IML), signé hors de l'outil")
+    @Operation(summary = "Contrôle et stockage du mandat SEPA (api IML), signé hors de l'outil : RUM et information bancaire tokenisée")
     @PostMapping("/sepa-mandates")
     @ResponseStatus(HttpStatus.CREATED)
-    public MandateResponse mandate(@RequestBody final MandateRequest request) {
+    public SepaMandate mandate(@RequestBody final MandateRequest request) {
         final var v = new Validation().check(Rules.isBlank(request.holder()), "holder", "Le titulaire du compte est obligatoire.");
         if (Rules.isBlank(request.iban())) {
             v.check(true, "iban", "L'IBAN est obligatoire.");
@@ -76,7 +74,7 @@ public class HardwareController {
             v.check(!Rules.isValidIban(request.iban()), "iban", "IBAN invalide : vérifiez sa saisie.");
         }
         v.throwIfInvalid();
-        return new MandateResponse(iml.storeMandate(request.holder(), request.iban()));
+        return iml.storeMandate(request.holder(), request.iban());
     }
 
     @Operation(summary = "Complétion d'adresse (Api-ORAS)")
