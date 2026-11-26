@@ -4,6 +4,7 @@ import com.orderfirst.api.model.OfferLevel;
 import com.orderfirst.api.model.OfferOption;
 import com.orderfirst.api.model.OpenMlApplied;
 import com.orderfirst.api.model.OrderValidated;
+import com.orderfirst.api.model.Sponsor;
 import com.orderfirst.api.port.OrderEventPublisher;
 import com.orderfirst.api.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
@@ -214,10 +215,10 @@ class OrderFirstApiTest {
     @Test
     void openMlRequiresTokenAndConditions() throws Exception {
         final var order = """
-                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","openMlSponsor":"0690654321"}""";
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550123","offerId":"bl-120","openMlSponsor":{"msisdn":"0690654321"}}""";
         send("/api/v1/contracts", order).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("openMlSponsor", "openMlConditionsAccepted")));
-        final var withToken = order.replace("}", ",\"openMlTokenId\":\"%s\"}".formatted(sponsorToken("0690654321")));
+        final var withToken = order.replace("{\"msisdn\":\"0690654321\"}", "{\"msisdn\":\"0690654321\",\"tokenId\":\"%s\"}".formatted(sponsorToken("0690654321")));
         send("/api/v1/contracts", withToken).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[*].field").value(contains("openMlConditionsAccepted")))
                 .andExpect(jsonPath("$.errors[0].message").value("Le client doit accepter les 3 conditions (ou être titulaire de la ligne du sponsor)."));
@@ -230,7 +231,7 @@ class OrderFirstApiTest {
         final var order = """
                 {"flow":"acquisition","customerId":"CL-000101","holder":%s,"billingAddress":%s,
                  "number":{"mode":"nouveau","msisdn":"0690123481"},"offerId":"bl-60","options":["multisim"],
-                 "openMlSponsor":"0690 65 43 21","openMlTokenId":"%s","openMlConditionsAccepted":true,
+                 "openMlSponsor":{"msisdn":"590690654321","lastName":"falsifié","tokenId":"%s"},"openMlConditionsAccepted":true,
                  "sim":{"type":"physique","iccid":"8933 0100 0000 0000 019"},
                  "terminal":{"id":"sam-a15","colorId":"sam-a15-noir","imei":"490154203237518"},%s}"""
                 .formatted(MARIE, ADDRESS, token, mandate());
@@ -252,7 +253,8 @@ class OrderFirstApiTest {
         assertEquals("promo-10e-6m", offer.getPromo().getId());
         // Sponsor (nom et prénom selon RHOC) et jeton de la vérification conservés avec la commande.
         assertEquals(new OpenMlApplied("OPENML_10E", "Open ML −10 €/mois", "0690654321", "MARTIN", "JULIEN", token, 10), offer.getOpenMl());
-        assertEquals(token, published().getOrder().getOpenMlTokenId());
+        // La commande porte le sponsor de RHOC (N° national, nom, prénom) avec le jeton de la recherche.
+        assertEquals(new Sponsor("0690654321", "MARTIN", "JULIEN", token), published().getOrder().getOpenMlSponsor());
         assertEquals(15.99, offer.getMonthlyPrice());
         assertEquals(5.99, offer.getMonthlyPriceDuringPromo());
         final var terminal = published().getTerminal();
@@ -487,10 +489,10 @@ class OrderFirstApiTest {
     @Test
     void cardLineChangesPlanWithoutOpenMl() throws Exception {
         final var order = """
-                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550124","offerId":"nb-10","openMlSponsor":"0690654321"}""";
+                {"flow":"forfait","customerId":"CL-000101","lineMsisdn":"0690550124","offerId":"nb-10","openMlSponsor":{"msisdn":"0690654321"}}""";
         send("/api/v1/contracts", order).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("openMlSponsor"));
-        final var withoutOpenMl = order.replace(",\"openMlSponsor\":\"0690654321\"", "");
+        final var withoutOpenMl = order.replace(",\"openMlSponsor\":{\"msisdn\":\"0690654321\"}", "");
         send("/api/v1/orders", confirmed(withoutOpenMl, contract(withoutOpenMl))).andExpect(status().isCreated());
         mvc.perform(get("/api/v1/customers/CL-000101/pending-lines")).andExpect(jsonPath("$").value(hasItem("0690550124")));
     }

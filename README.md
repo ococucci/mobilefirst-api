@@ -65,8 +65,8 @@ Le même corps sert à générer le contrat puis à valider la commande. Les cha
 
 | `flow` | Champs |
 | --- | --- |
-| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `ibanToken` (tel que renvoyé par `POST /sepa-mandates`) |
-| `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor`, `openMlTokenId`, `openMlConditionsAccepted` |
+| `acquisition` | `holder`, `billingAddress`, `number` (`nouveau` + `msisdn`, ou `portabilite` + `rio`, `portedMsisdn`, `operator`, `portingDate`), `offerId`, `options`, `openMlSponsor` (sponsor renvoyé par la recherche RHOC : `msisdn`, `lastName`, `firstName`, `tokenId`), `openMlConditionsAccepted`, `sim` (`type`, `iccid`), `terminal` (`id` du modèle, `colorId`, `imei`), `ibanToken` (tel que renvoyé par `POST /sepa-mandates`) |
+| `forfait` | `lineMsisdn`, `offerId`, `options`, `openMlSponsor` (sponsor renvoyé par la recherche RHOC : `msisdn`, `lastName`, `firstName`, `tokenId`), `openMlConditionsAccepted` |
 | `options` | `lineMsisdn`, `options` (liste complète souhaitée : le serveur calcule ajouts et retraits) |
 | `sim` | `lineMsisdn`, `simReason`, `sim` |
 

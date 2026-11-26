@@ -9,17 +9,18 @@ import java.util.Objects;
  * Commande saisie dans le tunnel, corps de POST /contracts et POST /orders. Les champs utiles dépendent
  * de la demande ({@code flow}) :
  * <ul>
- *   <li>acquisition : holder, billingAddress, number, offerId, options, openMlSponsor, openMlTokenId,
- *       openMlConditionsAccepted, sim, terminal, ibanToken ;</li>
- *   <li>forfait : lineMsisdn, offerId, options, openMlSponsor, openMlTokenId, openMlConditionsAccepted ;</li>
+ *   <li>acquisition : holder, billingAddress, number, offerId, options, openMlSponsor, openMlConditionsAccepted,
+ *       sim, terminal, ibanToken ;</li>
+ *   <li>forfait : lineMsisdn, offerId, options, openMlSponsor, openMlConditionsAccepted ;</li>
  *   <li>options : lineMsisdn, options (liste complète souhaitée, le serveur calcule ajouts et retraits) ;</li>
  *   <li>sim : lineMsisdn, simReason, sim.</li>
  * </ul>
  * Contrat (sauf options) : contractRef issu de POST /contracts et contractSigned.
  * <p>
- * Remise Open ML : openMlSponsor (N° de mobile ou ND du sponsor), openMlTokenId (jeton renvoyé par
- * POST /open-ml/sponsor-checks) et openMlConditionsAccepted (le client accepte les 3 conditions ou est titulaire
- * de la ligne du sponsor).
+ * Remise Open ML : openMlSponsor, le sponsor renvoyé par POST /open-ml/sponsor-checks (msisdn, lastName, firstName,
+ * tokenId), et openMlConditionsAccepted (le client accepte les 3 conditions ou est titulaire de la ligne du sponsor).
+ * À la validation, le serveur revérifie le sponsor auprès d'api RHOC : le N° (format national), le nom et le prénom
+ * sont ceux de RHOC ; le jeton est celui de la recherche faite à l'écran.
  */
 public class OrderRequest {
     private Flow flow;
@@ -30,8 +31,7 @@ public class OrderRequest {
     private NumberChoice number;
     private String offerId;
     private List<String> options;
-    private String openMlSponsor;
-    private String openMlTokenId;
+    private Sponsor openMlSponsor;
     private Boolean openMlConditionsAccepted;
     private SimChoice sim;
     private TerminalChoice terminal;
@@ -46,7 +46,7 @@ public class OrderRequest {
     public OrderRequest() {
     }
 
-    public OrderRequest(final Flow flow, final String customerId, final String lineMsisdn, final Identity holder, final Address billingAddress, final NumberChoice number, final String offerId, final List<String> options, final String openMlSponsor, final SimChoice sim, final TerminalChoice terminal, final IbanToken ibanToken, final String simReason, final String contractRef, final Boolean contractSigned, final Boolean cgvAccepted, final Boolean privacyAccepted) {
+    public OrderRequest(final Flow flow, final String customerId, final String lineMsisdn, final Identity holder, final Address billingAddress, final NumberChoice number, final String offerId, final List<String> options, final Sponsor openMlSponsor, final SimChoice sim, final TerminalChoice terminal, final IbanToken ibanToken, final String simReason, final String contractRef, final Boolean contractSigned, final Boolean cgvAccepted, final Boolean privacyAccepted) {
         this.flow = flow;
         this.customerId = customerId;
         this.lineMsisdn = lineMsisdn;
@@ -130,20 +130,18 @@ public class OrderRequest {
         this.options = options;
     }
 
-    public String getOpenMlSponsor() {
+    public Sponsor getOpenMlSponsor() {
         return openMlSponsor;
     }
 
-    public void setOpenMlSponsor(final String openMlSponsor) {
+    public void setOpenMlSponsor(final Sponsor openMlSponsor) {
         this.openMlSponsor = openMlSponsor;
     }
 
-    public String getOpenMlTokenId() {
-        return openMlTokenId;
-    }
-
-    public void setOpenMlTokenId(final String openMlTokenId) {
-        this.openMlTokenId = openMlTokenId;
+    /** N° du sponsor Open ML ; null sans remise Open ML. */
+    @JsonIgnore
+    public String getOpenMlSponsorMsisdn() {
+        return openMlSponsor == null ? null : openMlSponsor.msisdn();
     }
 
     public Boolean getOpenMlConditionsAccepted() {
@@ -227,16 +225,16 @@ public class OrderRequest {
     @Override
     public boolean equals(final Object o) {
         return this == o || o instanceof final OrderRequest that
-                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(openMlTokenId, that.openMlTokenId) && Objects.equals(openMlConditionsAccepted, that.openMlConditionsAccepted) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(ibanToken, that.ibanToken) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
+                && Objects.equals(flow, that.flow) && Objects.equals(customerId, that.customerId) && Objects.equals(lineMsisdn, that.lineMsisdn) && Objects.equals(holder, that.holder) && Objects.equals(billingAddress, that.billingAddress) && Objects.equals(number, that.number) && Objects.equals(offerId, that.offerId) && Objects.equals(options, that.options) && Objects.equals(openMlSponsor, that.openMlSponsor) && Objects.equals(openMlConditionsAccepted, that.openMlConditionsAccepted) && Objects.equals(sim, that.sim) && Objects.equals(terminal, that.terminal) && Objects.equals(ibanToken, that.ibanToken) && Objects.equals(simReason, that.simReason) && Objects.equals(contractRef, that.contractRef) && Objects.equals(contractSigned, that.contractSigned) && Objects.equals(cgvAccepted, that.cgvAccepted) && Objects.equals(privacyAccepted, that.privacyAccepted);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, openMlSponsor, openMlTokenId, openMlConditionsAccepted, sim, terminal, ibanToken, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
+        return Objects.hash(flow, customerId, lineMsisdn, holder, billingAddress, number, offerId, options, openMlSponsor, openMlConditionsAccepted, sim, terminal, ibanToken, simReason, contractRef, contractSigned, cgvAccepted, privacyAccepted);
     }
 
     @Override
     public String toString() {
-        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "openMlSponsor=" + openMlSponsor + ", " + "openMlTokenId=" + openMlTokenId + ", " + "openMlConditionsAccepted=" + openMlConditionsAccepted + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "ibanToken=" + ibanToken + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
+        return "OrderRequest[" + "flow=" + flow + ", " + "customerId=" + customerId + ", " + "lineMsisdn=" + lineMsisdn + ", " + "holder=" + holder + ", " + "billingAddress=" + billingAddress + ", " + "number=" + number + ", " + "offerId=" + offerId + ", " + "options=" + options + ", " + "openMlSponsor=" + openMlSponsor + ", " + "openMlConditionsAccepted=" + openMlConditionsAccepted + ", " + "sim=" + sim + ", " + "terminal=" + terminal + ", " + "ibanToken=" + ibanToken + ", " + "simReason=" + simReason + ", " + "contractRef=" + contractRef + ", " + "contractSigned=" + contractSigned + ", " + "cgvAccepted=" + cgvAccepted + ", " + "privacyAccepted=" + privacyAccepted + "]";
     }
 }

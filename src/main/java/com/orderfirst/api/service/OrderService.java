@@ -16,6 +16,7 @@ import com.orderfirst.api.model.Offer;
 import com.orderfirst.api.model.OrderRequest;
 import com.orderfirst.api.model.OrderValidated;
 import com.orderfirst.api.model.Score;
+import com.orderfirst.api.model.Sponsor;
 import com.orderfirst.api.model.TerminalSnapshot;
 import com.orderfirst.api.domain.ReferenceData;
 import com.orderfirst.api.domain.ApiException;
@@ -330,19 +331,22 @@ public class OrderService {
     }
 
     private void openMl(final OrderRequest r, final Offer offer, final Line line, final Validation v) {
-        if (isBlank(r.getOpenMlSponsor())) {
+        if (isBlank(r.getOpenMlSponsorMsisdn())) {
             return;
         }
         if (!Rules.isOpenMlAvailable(offer, line)) {
             v.check(offer != null, "openMlSponsor", "Remise Open ML indisponible pour la Carte Prépayée et pour une ligne Card.");
             return;
         }
-        final var sponsor = rhoc.sponsor(r.getOpenMlSponsor());
-        if (sponsor.isEmpty()) {
+        final var sponsor = rhoc.sponsor(r.getOpenMlSponsorMsisdn()).orElse(null);
+        if (sponsor == null) {
             v.check(true, "openMlSponsor", "Sponsor non reconnu par api RHOC.");
             return;
         }
-        v.check(isBlank(r.getOpenMlTokenId()), "openMlSponsor", "Recherchez le sponsor (api RHOC) avant de continuer.");
+        final var tokenId = r.getOpenMlSponsor().tokenId();
+        v.check(isBlank(tokenId), "openMlSponsor", "Recherchez le sponsor (api RHOC) avant de continuer.");
+        // Le sponsor de la commande est celui de RHOC (N° national, nom, prénom), avec le jeton de la recherche.
+        r.setOpenMlSponsor(new Sponsor(sponsor.msisdn(), sponsor.lastName(), sponsor.firstName(), tokenId));
         v.check(!Boolean.TRUE.equals(r.getOpenMlConditionsAccepted()), "openMlConditionsAccepted",
                 "Le client doit accepter les 3 conditions (ou être titulaire de la ligne du sponsor).");
     }
@@ -372,18 +376,17 @@ public class OrderService {
 
     private OfferSnapshot snapshot(final OrderRequest r, final Checked c) {
         final var offer = c.offer();
-        final boolean openMl = !isBlank(r.getOpenMlSponsor()) && Rules.isOpenMlAvailable(offer, c.line());
+        final boolean openMl = !isBlank(r.getOpenMlSponsorMsisdn()) && Rules.isOpenMlAvailable(offer, c.line());
         final double monthly = Rules.monthly(offer, r.getOptionsOrEmpty(), openMl);
         return new OfferSnapshot(offer.getId(), offer.getLabel(), offer.getPrice(), Rules.selectedOptions(offer, r.getOptionsOrEmpty()),
                 offer.getPromo(), openMl ? openMlApplied(r, offer) : null, monthly, Rules.monthlyDuringPromo(offer, monthly));
     }
 
-    /** Remise Open ML de la commande : nom et prénom du sponsor selon api RHOC, jeton de la vérification faite à l'écran. */
+    /** Remise Open ML de la commande : sponsor de la commande (revérifié auprès d'api RHOC à la validation). */
     private OpenMlApplied openMlApplied(final OrderRequest r, final Offer offer) {
-        final var sponsor = rhoc.sponsor(r.getOpenMlSponsor()).orElse(null);
-        return new OpenMlApplied(offer.getOpenMl().getId(), offer.getOpenMl().getLabel(), Rules.nationalNumber(r.getOpenMlSponsor()),
-                sponsor == null ? null : sponsor.lastName(), sponsor == null ? null : sponsor.firstName(),
-                r.getOpenMlTokenId(), Rules.openMlDiscount(offer));
+        final var sponsor = r.getOpenMlSponsor();
+        return new OpenMlApplied(offer.getOpenMl().getId(), offer.getOpenMl().getLabel(), sponsor.msisdn(),
+                sponsor.lastName(), sponsor.firstName(), sponsor.tokenId(), Rules.openMlDiscount(offer));
     }
 
     private OptionsChange optionsChange(final OrderRequest r, final Checked c) {

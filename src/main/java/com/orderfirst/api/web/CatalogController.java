@@ -74,7 +74,7 @@ public class CatalogController {
 
     /**
      * Résultat de la recherche du sponsor : s'il est reconnu, son N° (format national), son nom, son prénom et
-     * l'identifiant du jeton RHOC à renvoyer avec la commande (openMlTokenId).
+     * l'identifiant du jeton RHOC ; le front renvoie ce sponsor dans la commande (openMlSponsor).
      */
     public record SponsorResult(boolean valid, String msisdn, String lastName, String firstName, String tokenId) {
     }

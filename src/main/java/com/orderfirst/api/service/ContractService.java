@@ -74,8 +74,8 @@ public class ContractService {
         }
         if (c.offer() != null) {
             final var options = Rules.selectedOptions(c.offer(), r.getOptionsOrEmpty());
-            final var sponsor = Rules.isBlank(r.getOpenMlSponsor()) || !Rules.isOpenMlAvailable(c.offer(), c.line())
-                    ? null : rhoc.sponsor(r.getOpenMlSponsor()).orElse(null);
+            final var sponsor = Rules.isBlank(r.getOpenMlSponsorMsisdn()) || !Rules.isOpenMlAvailable(c.offer(), c.line())
+                    ? null : rhoc.sponsor(r.getOpenMlSponsorMsisdn()).orElse(null);
             final boolean openMl = sponsor != null;
             if (c.line() != null) {
                 lines.add("Offre actuelle : " + c.line().getOfferLabel());
