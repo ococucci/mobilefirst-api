@@ -4,6 +4,9 @@ import com.orderfirst.api.model.IbanToken;
 import com.orderfirst.api.model.AddressSuggestion;
 import com.orderfirst.api.model.Terminal;
 import com.orderfirst.api.domain.Rules;
+import io.swagger.v3.oas.annotations.Parameter;
+import com.orderfirst.api.domain.ApiException;
+import com.orderfirst.api.service.CatalogService;
 import com.orderfirst.api.domain.Validation;
 import com.orderfirst.api.port.ImlPort;
 import com.orderfirst.api.port.OrasPort;
@@ -29,17 +32,25 @@ public class HardwareController {
     private final SiFinancierPort siFinancier;
     private final ImlPort iml;
     private final OrasPort oras;
+    private final CatalogService catalog;
 
-    public HardwareController(final SiFinancierPort siFinancier, final ImlPort iml, final OrasPort oras) {
+    public HardwareController(final SiFinancierPort siFinancier, final ImlPort iml, final OrasPort oras, final CatalogService catalog) {
+        this.catalog = catalog;
         this.siFinancier = siFinancier;
         this.iml = iml;
         this.oras = oras;
     }
 
-    @Operation(summary = "Terminaux vendables (enabler si-financier)")
+    @Operation(summary = "Terminaux vendables (enabler si-financier) ; avec offerId, seulement ceux qui ont un tarif pour la gamme de l'offre")
     @GetMapping("/hardware/terminals")
-    public List<Terminal> terminals() {
-        return siFinancier.terminals();
+    public List<Terminal> terminals(
+            @Parameter(description = "Offre choisie : seuls les terminaux tarifés pour sa gamme (niveau) sont renvoyés")
+            @RequestParam(required = false) final String offerId) {
+        if (Rules.isBlank(offerId)) {
+            return siFinancier.terminals();
+        }
+        final var offer = catalog.offer(offerId).orElseThrow(() -> ApiException.notFound("Offre " + offerId + " introuvable."));
+        return siFinancier.terminals().stream().filter(t -> Rules.hasPriceFor(t, offer.getLevel())).toList();
     }
 
     public record IccidRequest(String iccid) {

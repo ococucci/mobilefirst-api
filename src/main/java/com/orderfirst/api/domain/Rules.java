@@ -6,6 +6,7 @@ import com.orderfirst.api.model.Flow;
 import com.orderfirst.api.model.Identity;
 import com.orderfirst.api.model.Line;
 import com.orderfirst.api.model.Offer;
+import com.orderfirst.api.model.OfferLevel;
 import com.orderfirst.api.model.OfferOption;
 import com.orderfirst.api.model.Score;
 import com.orderfirst.api.model.Terminal;
@@ -157,6 +158,11 @@ public final class Rules {
     }
 
     /** Prix du terminal au niveau de l'offre choisie (niveau de subvention). */
+    /** Le terminal a un tarif pour la gamme (niveau) de l'offre : seul un terminal tarifé est proposé avec elle. */
+    public static boolean hasPriceFor(final Terminal terminal, final OfferLevel level) {
+        return terminal.getPrices() != null && level != null && terminal.getPrices().get(level) != null;
+    }
+
     public static double terminalPrice(final Terminal terminal, final Offer offer) {
         final var price = terminal.getPrices() == null ? null : terminal.getPrices().get(offer.getLevel());
         if (price == null) {

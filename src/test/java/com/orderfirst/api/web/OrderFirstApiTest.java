@@ -296,6 +296,28 @@ class OrderFirstApiTest {
     }
 
     @Test
+    void onlyTerminalsPricedForTheOfferLevel() throws Exception {
+        // bl-20 (non subventionnée) : pas d'iPhone 15 PRO ni de Galaxy S24 ; bl-120 (gold) : iPhone 15 PRO proposé.
+        mvc.perform(get("/api/v1/hardware/terminals").param("offerId", "bl-20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].id").value(hasItem("sam-a15")))
+                .andExpect(jsonPath("$[*].id").value(not(hasItem("ip15pro-128"))))
+                .andExpect(jsonPath("$[*].id").value(not(hasItem("sam-s24"))));
+        mvc.perform(get("/api/v1/hardware/terminals").param("offerId", "bl-120"))
+                .andExpect(jsonPath("$[?(@.id == 'ip15pro-128')].prices.gold").value(hasItem(869.0)));
+        mvc.perform(get("/api/v1/hardware/terminals").param("offerId", "inconnue")).andExpect(status().isNotFound());
+        // Sans offre : tous les terminaux.
+        mvc.perform(get("/api/v1/hardware/terminals")).andExpect(jsonPath("$[*].id").value(hasItem("ip15pro-128")));
+        // Un terminal sans tarif pour la gamme est refusé dans la commande.
+        send("/api/v1/contracts", """
+                {"flow":"acquisition","customerId":"CL-000101","offerId":"bl-60",
+                 "terminal":{"id":"ip15pro-128","colorId":"ip15pro-128-noir","imei":"490154203237518"}}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[?(@.field == 'terminal.id')].message")
+                        .value(hasItem("Ce terminal n'est pas proposé avec la gamme de l'offre choisie.")));
+    }
+
+    @Test
     void terminalColorMustBelongToTheModel() throws Exception {
         send("/api/v1/contracts", """
                 {"flow":"acquisition","customerId":"CL-000101","offerId":"bl-60",

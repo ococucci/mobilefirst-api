@@ -167,12 +167,17 @@ final class StubData {
 
     static final List<String> AVAILABLE_NUMBERS = List.of("0690123480", "0690123481", "0690123482", "0690123499", "0691245566");
 
+    /** Absence de tarif pour un niveau : le terminal n'est pas proposé avec les offres de cette gamme. */
+    private static final double NONE = Double.NaN;
+
     /** Prix d'un terminal pour chaque niveau d'offre, dans l'ordre : nonsub, card, silver, gold, elite, platine. */
     private static Map<OfferLevel, Double> prices(final double... byLevel) {
         final var levels = OfferLevel.values();
         final var prices = new EnumMap<OfferLevel, Double>(OfferLevel.class);
         for (int i = 0; i < levels.length; i++) {
-            prices.put(levels[i], byLevel[i]);
+            if (!Double.isNaN(byLevel[i])) {
+                prices.put(levels[i], byLevel[i]);
+            }
         }
         return Collections.unmodifiableMap(prices);
     }
@@ -192,10 +197,10 @@ final class StubData {
             terminal("ip15-128", "APPLE", "iPhone 15 128Go", prices(769, 769, 649, 529, 464, 399), APPLE_COLORS),
             terminal("ip15-256", "APPLE", "iPhone 15 256Go", prices(899, 899, 779, 659, 594, 529), APPLE_COLORS),
             terminal("ip15plus-256", "APPLE", "iPhone 15 PLUS 256Go", prices(999, 999, 879, 759, 694, 629), APPLE_COLORS),
-            terminal("ip15pro-128", "APPLE", "iPhone 15 PRO 128Go", prices(1129, 1129, 999, 869, 804, 739), List.of("blanc", "bleu", "noir")),
-            terminal("ip15pro-256", "APPLE", "iPhone 15 PRO 256Go", prices(1259, 1259, 1129, 999, 934, 869), List.of("blanc", "bleu", "noir")),
-            terminal("ip15promax-256", "APPLE", "iPhone 15 PRO MAX 256Go", prices(1379, 1379, 1249, 1119, 1054, 989), List.of("blanc", "bleu", "noir")),
-            terminal("ip15promax-512", "APPLE", "iPhone 15 PRO MAX 512Go", prices(1629, 1629, 1499, 1369, 1304, 1239), List.of("blanc", "bleu", "noir")),
+            terminal("ip15pro-128", "APPLE", "iPhone 15 PRO 128Go", prices(NONE, NONE, NONE, 869, 804, 739), List.of("blanc", "bleu", "noir")),
+            terminal("ip15pro-256", "APPLE", "iPhone 15 PRO 256Go", prices(NONE, NONE, NONE, 999, 934, 869), List.of("blanc", "bleu", "noir")),
+            terminal("ip15promax-256", "APPLE", "iPhone 15 PRO MAX 256Go", prices(NONE, NONE, NONE, 1119, 1054, 989), List.of("blanc", "bleu", "noir")),
+            terminal("ip15promax-512", "APPLE", "iPhone 15 PRO MAX 512Go", prices(NONE, NONE, NONE, 1369, 1304, 1239), List.of("blanc", "bleu", "noir")),
             terminal("ip16-128", "APPLE", "iPhone 16 5G 128Go", prices(969, 969, 829, 689, 619, 549), APPLE_COLORS),
             terminal("ip16-256", "APPLE", "iPhone 16 5G 256Go", prices(1099, 1099, 959, 819, 749, 679), APPLE_COLORS),
             terminal("ip16plus-128", "APPLE", "iPhone 16 PLUS 5G 128Go", prices(1119, 1119, 979, 839, 769, 699), APPLE_COLORS),
@@ -203,7 +208,7 @@ final class StubData {
             terminal("bb-key2", "BLACK BERRY", "BlackBerry KEY2 64Go", prices(349, 349, 299, 249, 224, 199), List.of("noir")),
             terminal("cadaoz-c3", "CADAOZ", "Cadaoz C3 4G", prices(59, 59, 39, 19, 10, 1), List.of("blanc", "noir")),
             terminal("sam-a15", "SAMSUNG", "Galaxy A15 128Go", prices(149, 149, 99, 49, 25, 1), List.of("blanc", "bleu", "noir")),
-            terminal("sam-s24", "SAMSUNG", "Galaxy S24 5G 256Go", prices(899, 899, 749, 599, 524, 449), List.of("bleu", "noir", "vert")),
+            terminal("sam-s24", "SAMSUNG", "Galaxy S24 5G 256Go", prices(NONE, NONE, 749, 599, 524, 449), List.of("bleu", "noir", "vert")),
             terminal("xiaomi-rn13", "XIAOMI", "Redmi Note 13 128Go", prices(199, 199, 149, 99, 74, 49), List.of("bleu", "noir", "vert")));
 
     /** ICCID en stock boutique (enabler si-financier). */

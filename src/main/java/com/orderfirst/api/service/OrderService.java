@@ -316,6 +316,8 @@ public class OrderService {
         final var terminal = isBlank(choice.getId()) ? null
                 : siFinancier.terminals().stream().filter(t -> t.getId().equals(choice.getId())).findFirst().orElse(null);
         v.check(terminal == null, "terminal.id", "Choisissez un modèle de terminal.");
+        v.check(terminal != null && offer != null && !Rules.hasPriceFor(terminal, offer.getLevel()), "terminal.id",
+                "Ce terminal n'est pas proposé avec la gamme de l'offre choisie.");
         final var color = terminal == null ? null : terminal.color(choice.getColorId()).orElse(null);
         v.check(terminal != null && color == null, "terminal.colorId", "Choisissez une couleur proposée pour ce modèle.");
         if (isBlank(choice.getImei())) {
@@ -323,7 +325,7 @@ public class OrderService {
         } else {
             v.check(!Rules.isValidImei(choice.getImei()), "terminal.imei", "IMEI invalide : 15 chiffres.");
         }
-        if (terminal == null || color == null || offer == null) {
+        if (terminal == null || color == null || offer == null || !Rules.hasPriceFor(terminal, offer.getLevel())) {
             return null;
         }
         return new TerminalSnapshot(terminal.getId(), terminal.getBrand(), terminal.getModel(), color, offer.getLevel(),

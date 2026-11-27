@@ -49,7 +49,7 @@ Les erreurs sortent au format ProblemDetail (RFC 7807) :
 | `GET /catalog/countries` | Pays (`id`, `label`) pour la nationalité d'origine ; `identity.nationalite` contient l'`id` du pays | Référentiel des pays (bouchon : codes ISO 3166-1 alpha-2) |
 | `GET /numbers/available` | Numéros de mobile disponibles | api ressource |
 | `POST /open-ml/sponsor-checks` | Recherche du sponsor Open ML par N° de mobile ou ND : nom, prénom et `tokenId` (jeton RHOC) | api RHOC |
-| `GET /hardware/terminals` | Modèles de terminaux : marque, modèle, prix par niveau d'offre, couleurs | Enabler si-financier |
+| `GET /hardware/terminals?offerId=` | Terminaux vendables ; avec `offerId`, seulement ceux qui ont un tarif pour la gamme (niveau) de l'offre | Enabler si-financier |
 | `POST /hardware/iccid-checks` | Contrôle de l'ICCID (`ok`, `format`, `inconnu`) | Enabler si-financier |
 | `POST /hardware/sim-scans` | Lecture simulée du code-barres d'une SIM | Enabler si-financier |
 | `POST /sepa-mandates` | Contrôle et stockage du mandat SEPA (signé hors outil) : renvoie l'information bancaire tokenisée (`uid`, `codeIban`, `bankIdentifier`, `bankBranchIdentifier`, `accountNumber`, `ribCheckDigits`) | api IML |
